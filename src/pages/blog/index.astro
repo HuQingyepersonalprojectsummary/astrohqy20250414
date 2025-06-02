@@ -1,141 +1,165 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import ArchiveWidget from '../../components/ArchiveWidget.astro'; // Import ArchiveWidget
-import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
-import { getCollection } from 'astro:content';
-import FormattedDate from '../../components/FormattedDate.astro';
+// 导入基础组件和常量
+import BaseHead from '../../components/BaseHead.astro'; // 基础头部，用于SEO和元信息
+import Header from '../../components/Header.astro';     // 页面头部组件
+import Footer from '../../components/Footer.astro';     // 页面尾部组件
+import ArchiveWidget from '../../components/ArchiveWidget.astro'; // 归档小部件
+import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts'; // 站点标题和描述常量
+import { getCollection } from 'astro:content';        // Astro 内容集合API，用于获取博客文章
+import FormattedDate from '../../components/FormattedDate.astro'; // 日期格式化组件
 
+// 获取所有 'blog' 集合中的文章，并按发布日期降序排列
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 ---
 
+{/* HTML 文档，语言设置为中文 */}
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 	<head>
+		{/* 基础头部组件，传入站点标题和描述 */}
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
-            /* Existing styles for ul, li, etc. */
+            /* 博客文章列表 (ul) 的现有样式 */
 			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
+				display: flex; /* 使用 flex 布局 */
+				flex-wrap: wrap; /* 允许列表项换行 */
+				gap: 2rem; /* 列表项之间的间隙 */
+				list-style-type: none; /* 去除默认的列表项目符号 */
+				margin: 0; /* 去除外边距 */
+				padding: 0; /* 去除内边距 */
 			}
+			/* 列表项 (li) 样式 */
 			ul li {
-				width: calc(50% - 1rem);
+				width: calc(50% - 1rem); /* 在大屏幕上，每行显示两项 (考虑间隙) */
 			}
+			/* 列表项内所有元素的通用样式 */
 			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
+				text-decoration: none; /* 去除链接下划线 */
+				transition: 0.2s ease; /* 平滑过渡效果 */
 			}
-			ul li:first-child { /* This style might need adjustment if the layout changes significantly */
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
+			/* 首个列表项的特殊样式 (通常用于突出显示最新文章) */
+			ul li:first-child {
+				width: 100%; /* 占满整行 */
+				margin-bottom: 1rem; /* 与下方内容的间距 */
+				text-align: center; /* 文本居中 */
 			}
 			ul li:first-child img {
-				width: 100%;
+				width: 100%; /* 首项图片宽度占满 */
 			}
 			ul li:first-child .title {
-				font-size: 2.369rem;
+				font-size: 2.369rem; /* 首项标题字体较大 */
 			}
+			/* 列表项内图片样式 */
 			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
+				margin-bottom: 0.5rem; /* 图片与下方标题的间距 */
+				border-radius: 12px; /* 图片圆角 */
 			}
+			/* 列表项内链接样式 */
 			ul li a {
-				display: block;
+				display: block; /* 使整个列表项区域可点击 */
 			}
+			/* 文章标题样式 */
 			.title {
 				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
+				color: rgb(var(--black)); /* 标题颜色 */
+				line-height: 1; /* 行高 */
 			}
+			/* 日期样式 */
 			.date {
 				margin: 0;
-				color: rgb(var(--gray));
+				color: rgb(var(--gray)); /* 日期颜色 */
 			}
+			/* 鼠标悬停时，列表项内标题和日期的颜色变化 */
 			ul li a:hover h4,
 			ul li a:hover .date {
-				color: rgb(var(--accent));
+				color: rgb(var(--accent)); /* 使用主题强调色 */
 			}
+			/* 鼠标悬停时，列表项内图片的阴影效果 */
 			ul a:hover img {
-				box-shadow: var(--box-shadow);
+				box-shadow: var(--box-shadow); /* 使用主题定义的阴影 */
 			}
 
-            /* New styles for two-column layout */
+            /* 两栏布局的新增/调整样式 */
+            /* 页面整体包裹器 */
             .page-wrapper {
                 display: flex;
-                flex-direction: column;
-                min-height: 100vh;
+                flex-direction: column; /* 垂直排列页头、主内容、页脚 */
+                min-height: 100vh; /* 最小高度为视口高度 */
             }
-            .main-content-area { /* Contains main blog list and sidebar */
-                display: flex;
-                flex-wrap: wrap;
-                gap: 2em;
+            /* 主内容区域，包含博文列表和侧边栏 */
+            .main-content-area {
+                display: flex; /* flex 布局 */
+                flex-wrap: wrap; /* 允许换行 */
+                gap: 2em; /* 列间距 */
                 width: 100%;
-                max-width: 1280px; /* Wider max-width for blog index to accommodate sidebar + wider list */
-                margin: 0 auto;
-                padding: 1em; /* Padding for the overall content area */
-                flex-grow: 1;
+                max-width: 1280px; /* 主内容区最大宽度，为博客列表和侧边栏提供空间 */
+                margin: 0 auto; /* 水平居中 */
+                padding: 1em; /* 内边距 */
+                flex-grow: 1; /* 占据可用垂直空间 */
             }
-            .blog-list-column { /* Main blog listing */
-                flex: 3;
-                min-width: 70%;
-                /* The 'main' tag's original width of 960px is now handled by this column's flex properties */
+            /* 博文列表列 */
+            .blog-list-column {
+                flex: 3; /* 占据较大比例空间 */
+                min-width: 70%; /* 最小宽度，防止被过度挤压 */
             }
-            .sidebar-column { /* Sidebar for widgets */
-                flex: 1;
-                min-width: 250px;
+            /* 侧边栏列 */
+            .sidebar-column {
+                flex: 1; /* 占据较小比例空间 */
+                min-width: 250px; /* 侧边栏最小宽度 */
             }
 
-			@media (max-width: 960px) { /* Breakpoint for stacking */
+            /* 响应式设计：针对小屏幕的媒体查询 */
+			@media (max-width: 960px) {
                 .main-content-area {
-                    flex-direction: column;
-                    align-items: center;
+                    flex-direction: column; /* 垂直堆叠 */
+                    align-items: center; /* 居中对齐 */
                 }
                 .blog-list-column {
-                    min-width: 100%;
-                    order: 1;
+                    min-width: 100%; /* 博文列表占满宽度 */
+                    order: 1; /* 内容优先 */
                 }
                 .sidebar-column {
-                    min-width: 100%;
-                    max-width: 720px; /* Match content width when stacked */
-                    order: 2;
+                    min-width: 100%; /* 侧边栏占满宽度 */
+                    max-width: 720px; /* 堆叠时最大宽度与内容区一致 */
+                    order: 2; /* 侧边栏在内容下方 */
                 }
-				ul { /* Adjustments for stacked view if needed */
-					gap: 0.5em;
+                /* 调整列表在堆叠视图中的样式 */
+				ul {
+					gap: 0.5em; /* 减小列表项间距 */
 				}
 				ul li {
-					width: 100%;
-					text-align: center;
+					width: 100%; /* 列表项占满宽度 */
+					text-align: center; /* 文本居中 */
 				}
 				ul li:first-child {
-					margin-bottom: 0;
+					margin-bottom: 0; /* 移除首项的下外边距 */
 				}
 				ul li:first-child .title {
-					font-size: 1.563em;
+					font-size: 1.563em; /* 调整首项标题字体大小 */
 				}
 			}
 		</style>
 	</head>
-	<body class="page-wrapper">
-		<Header />
-		<main class="main-content-area"> {/* Replaced main tag with div and class, or wrap main tag */}
+	<body class="page-wrapper"> {/* 应用页面包裹器样式 */}
+		<Header /> {/* 页头 */}
+		<main class="main-content-area"> {/* 主内容区域 */}
+            {/* 博文列表列 */}
             <div class="blog-list-column">
-                <section> {/* Existing section with blog posts */}
+                <section> {/* 包含博文列表的区域 */}
                     <ul>
+                        {/* 遍历排序后的文章数据，为每篇文章创建一个列表项 */}
                         {
                             posts.map((post) => (
                                 <li>
+                                    {/* 链接到单篇博文页面 */}
                                     <a href={`/blog/${post.id}/`}>
-                                        <img width={720} height={360} src={post.data.heroImage} alt="" />
+                                        {/* 文章主图片，alt 文本设为文章标题以提高可访问性 */}
+                                        <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} />
+                                        {/* 文章标题 */}
                                         <h4 class="title">{post.data.title}</h4>
+                                        {/* 文章发布日期 */}
                                         <p class="date">
                                             <FormattedDate date={post.data.pubDate} />
                                         </p>
@@ -146,10 +170,11 @@ const posts = (await getCollection('blog')).sort(
                     </ul>
                 </section>
             </div>
+            {/* 侧边栏列 */}
             <aside class="sidebar-column">
-                <ArchiveWidget />
+                <ArchiveWidget /> {/* 归档小部件 */}
             </aside>
 		</main>
-		<Footer />
+		<Footer /> {/* 页脚 */}
 	</body>
 </html>

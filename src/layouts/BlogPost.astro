@@ -1,76 +1,98 @@
 ---
+// 导入 Astro 内容集合相关的类型定义
 import type { CollectionEntry } from 'astro:content';
+// 导入基础头部组件，用于设置页面的 <head> 内容
 import BaseHead from '../components/BaseHead.astro';
+// 导入页头组件
 import Header from '../components/Header.astro';
+// 导入页脚组件
 import Footer from '../components/Footer.astro';
+// 导入日期格式化组件
 import FormattedDate from '../components/FormattedDate.astro';
+// 导入热力图显示组件 (React)
 import HeatmapDisplay from '../components/HeatmapDisplay.jsx';
-import ArchiveWidget from '../components/ArchiveWidget.astro'; // Import ArchiveWidget
+// 导入归档小部件组件
+import ArchiveWidget from '../components/ArchiveWidget.astro';
 
+// 定义此布局组件期望接收的 Props 类型，通常是博客文章的数据
 type Props = CollectionEntry<'blog'>['data'];
 
+// 从 Astro.props 中解构出博客文章的各项数据
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 ---
 
+{/* HTML 文档的 lang 属性设置为 "en" (英文)，可以根据实际情况修改为 "zh-CN" */}
 <html lang="en">
 	<head>
+		{/* BaseHead 组件，用于生成页面的 SEO 相关 meta 标签和标题 */}
 		<BaseHead title={title} description={description} />
 		<style>
-			/* ... existing styles ... */
-			.prose { /* Keep existing prose styles for the main content column */
-				width: 720px; /* This will become the basis for main column width */
+			/* 保留文章主体内容的现有样式 */
+			.prose {
+				width: 720px; /* 这将成为主内容列宽度的基础 */
 				max-width: 100%;
-				/* margin: auto; Remove auto margin as flex will handle positioning */
-				padding: 1em;
-				color: rgb(var(--gray-dark));
+				/* margin: auto; 已移除，因为 flex 布局会处理定位 */
+				padding: 1em; /* 内边距 */
+				color: rgb(var(--gray-dark)); /* 文字颜色 */
 			}
-            /* New styles for two-column layout */
-            .page-wrapper { /* Wraps header, main content area, and footer */
-                display: flex;
-                flex-direction: column;
-                min-height: 100vh;
+
+            /* 两栏布局的新增样式 */
+            /* 页面整体包裹器，包含页头、主内容区域和页脚 */
+            .page-wrapper {
+                display: flex; /* 使用 flex 布局 */
+                flex-direction: column; /* 子元素垂直排列 */
+                min-height: 100vh; /* 最小高度为视口高度，确保页脚在内容不足时也能置底 */
             }
-            .main-content-area { /* Contains main article and sidebar */
-                display: flex;
-                flex-wrap: wrap; /* Allow sidebar to wrap on smaller screens */
-                gap: 2em; /* Space between content and sidebar */
-                width: 100%;
-                max-width: 1100px; /* Adjust max-width to accommodate sidebar */
-                margin: 0 auto; /* Center the content area */
-                padding: 1em; /* Padding for the overall content area */
-                flex-grow: 1; /* Ensure it takes available space if footer is sticky */
+            /* 主内容区域，包含文章和侧边栏 */
+            .main-content-area {
+                display: flex; /* 使用 flex 布局 */
+                flex-wrap: wrap; /* 允许侧边栏在小屏幕上换行 */
+                gap: 2em; /* 内容与侧边栏之间的间隙 */
+                width: 100%; /* 宽度占满父容器 */
+                max-width: 1100px; /* 最大宽度，以适应侧边栏 */
+                margin: 0 auto; /* 水平居中 */
+                padding: 1em; /* 内边距 */
+                flex-grow: 1; /* 占据可用空间，用于粘性页脚的场景 */
             }
-            .article-column { /* Main blog post content */
-                flex: 3; /* Takes up more space */
-                min-width: 70%; /* Ensure it has enough width before wrapping */
+            /* 文章内容列 */
+            .article-column {
+                flex: 3; /* 占据相对较多的空间比例 (3/4) */
+                min-width: 70%; /* 在换行前确保有足够的宽度 */
             }
-            .sidebar-column { /* Sidebar for widgets */
-                flex: 1;
-                min-width: 250px; /* Minimum width for sidebar */
+            /* 侧边栏列，用于放置小部件 */
+            .sidebar-column {
+                flex: 1; /* 占据相对较少的空间比例 (1/4) */
+                min-width: 250px; /* 侧边栏的最小宽度 */
             }
 
-            @media (max-width: 960px) { /* Breakpoint for stacking */
+            /* 响应式设计：针对小屏幕的媒体查询 */
+            @media (max-width: 960px) {
                 .main-content-area {
-                    flex-direction: column;
-                    align-items: center; /* Center items when stacked */
+                    flex-direction: column; /* 在小屏幕上，主内容和侧边栏垂直堆叠 */
+                    align-items: center; /* 堆叠时居中对齐各项 */
                 }
                 .article-column {
-                    min-width: 100%; /* Full width when stacked */
-                    order: 1; /* Content first */
+                    min-width: 100%; /* 堆叠时文章列占满全宽 */
+                    order: 1; /* 内容优先显示 */
                 }
                 .sidebar-column {
-                    min-width: 100%; /* Full width for sidebar when stacked */
-                    max-width: 720px; /* Match prose width when stacked */
-                    order: 2; /* Sidebar second */
+                    min-width: 100%; /* 堆叠时侧边栏占满全宽 */
+                    max-width: 720px; /* 堆叠时侧边栏最大宽度与文章内容宽度一致 */
+                    order: 2; /* 侧边栏在内容下方显示 */
                 }
             }
-            /* ... other existing styles ... */
-            /* Ensure existing styles from original file are maintained or adapted */
-			main { /* This was the original main tag, ensure its styles are covered or removed if redundant */
-				/* width: calc(100% - 2em); /* Likely redundant now */
-				/* max-width: 100%; */ /* Likely redundant now */
-				/* margin: 0; */ /* Likely redundant now */
-			}
+
+            /* 评论区样式 */
+            .comments-section {
+                margin-top: 40px; /* 与上方内容的间距 */
+                padding-top: 20px; /* 顶部内边距 */
+                border-top: 1px solid #eee; /* 顶部边框作为分隔线 */
+            }
+            /* 热力图容器样式 */
+            .heatmap-container {
+                margin-top: 30px; /* 与上方内容的间距 */
+            }
+            /* 确保其他现有样式被保留或已包含在上面 */
 			.hero-image {
 				width: 100%;
 			}
@@ -80,88 +102,101 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 				border-radius: 12px;
 				box-shadow: var(--box-shadow);
 			}
-			.title {
+			.title { /* 文章标题部分的容器 */
 				margin-bottom: 1em;
 				padding: 1em 0;
 				text-align: center;
 				line-height: 1;
 			}
-			.title h1 {
+			.title h1 { /* 主标题样式 */
 				margin: 0 0 0.5em 0;
 			}
-			.date {
+			.date { /* 日期显示样式 */
 				margin-bottom: 0.5em;
 				color: rgb(var(--gray));
 			}
-			.last-updated-on {
+			.last-updated-on { /* “最后更新于”文本样式 */
 				font-style: italic;
 			}
-            .comments-section {
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #eee;
-            }
-            .heatmap-container {
-                margin-top: 30px;
-            }
 		</style>
 	</head>
 
-	<body class="page-wrapper"> {/* Added page-wrapper class */}
-		<Header />
-		<main class="main-content-area"> {/* Renamed from main to main-content-area and applied flex */ }
-            <div class="article-column"> {/* Added wrapper for article content */}
+	<body class="page-wrapper"> {/* 应用页面整体包裹器样式 */}
+		<Header /> {/* 页头组件 */}
+		<main class="main-content-area"> {/* 主内容区域，包含文章和侧边栏 */}
+            {/* 文章内容列 */}
+            <div class="article-column">
                 <article>
+                    {/* 文章主图片 */}
                     <div class="hero-image">
                         {heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
                     </div>
-                    <div class="prose"> {/* Prose is now inside article-column */}
+                    {/* 文章文本内容容器 */}
+                    <div class="prose">
+                        {/* 文章标题和日期部分 */}
                         <div class="title">
                             <div class="date">
-                                <FormattedDate date={pubDate} />
-                                {
-                                    updatedDate && (
-                                        <div class="last-updated-on">
-                                            Last updated on <FormattedDate date={updatedDate} />
-                                        </div>
-                                    )
-                                }
+                                <FormattedDate date={pubDate} /> {/* 显示格式化的发布日期 */}
                             </div>
-                            <h1>{title}</h1>
-                            <hr />
+                            {/* 如果有更新日期，则显示 */}
+                            {
+                                updatedDate && (
+                                    <div class="last-updated-on">
+                                        最后更新于 <FormattedDate date={updatedDate} />
+                                    </div>
+                                )
+                            }
+                            <h1>{title}</h1> {/* 文章主标题 */}
+                            <hr /> {/* 分隔线 */}
                         </div>
-                        <slot /> {/* Blog post content renders here */}
+                        {/* Astro 的 slot，用于插入 Markdown/MDX 转换后的 HTML 内容 */}
+                        <slot />
 
+                        {/* 评论区容器，React 组件将在此处渲染 */}
                         <div id="comments-app" class="comments-section">
-                            {/* Comments rendered by script */}
+                            {/* 注释：评论内容由页面底部的客户端脚本渲染 */}
                         </div>
 
+                        {/* 热力图显示容器 */}
                         <div class="heatmap-container">
+                            {/* HeatmapDisplay React 组件，设置 client:visible 使其在可见时加载 */}
                             <HeatmapDisplay client:visible />
                         </div>
                     </div>
                 </article>
             </div>
-            <aside class="sidebar-column"> {/* Sidebar column */}
-                <ArchiveWidget />
+            {/* 侧边栏 */}
+            <aside class="sidebar-column">
+                <ArchiveWidget /> {/* 归档小部件 */}
             </aside>
 		</main>
-		<Footer />
-        {/* ... existing script ... */}
+		<Footer /> {/* 页脚组件 */}
+
+        {/* 用于评论功能的客户端 React 脚本 */}
         <script type="module">
+            // 导入 React 和 ReactDOM
             import React from 'react';
             import ReactDOM from 'react-dom/client';
+            // 导入评论表单和评论列表 React 组件
             import CommentForm from '../components/CommentForm.jsx';
             import CommentList from '../components/CommentList.jsx';
+            // HeatmapDisplay 组件通过 Astro 的 client:visible 指令加载，因此不需要在此处导入进行渲染
 
+            // 评论应用的主组件
             const CommentsApp = () => {
+                // 使用 React state 管理评论列表，包含初始的模拟评论
                 const [comments, setComments] = React.useState([
-                    { id: 1, author: 'Alice', text: 'Great post!', ipAddress: '192.168.0.1 (Mock)', timestamp: new Date(Date.now() - 100000).toISOString() },
-                    { id: 2, author: 'Bob', text: 'Thanks for sharing.', ipAddress: '203.0.113.42 (Mock)', timestamp: new Date().toISOString() }
+                    { id: 1, author: 'Alice', text: '很棒的文章！', ipAddress: '192.168.0.1 (模拟)', timestamp: new Date(Date.now() - 100000).toISOString() },
+                    { id: 2, author: 'Bob', text: '感谢分享。', ipAddress: '203.0.113.42 (模拟)', timestamp: new Date().toISOString() }
                 ]);
+
+                // 处理新评论提交的函数
                 const handleCommentSubmit = (newComment) => {
+                    // 更新评论列表，将新评论添加到最前面
                     setComments(prevComments => [newComment, ...prevComments]);
                 };
+
+                // 返回评论列表和评论表单组件
                 return (
                     <>
                         <CommentList comments={comments} />
@@ -169,7 +204,10 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
                     </>
                 );
             };
+
+            // 获取用于渲染评论应用的 DOM 容器
             const container = document.getElementById('comments-app');
+            // 如果容器存在，则使用 ReactDOM.createRoot 渲染 CommentsApp 组件
             if (container) {
                 const root = ReactDOM.createRoot(container);
                 root.render(<CommentsApp />);

@@ -1,25 +1,39 @@
 ---
+// 导入用于获取归档数据的函数和类型定义
 import { getArchiveData, type YearData } from '../utils/archiveHelpers';
 
+// 调用 getArchiveData 函数异步获取博客的归档数据 (按年份和月份组织)
 const archiveData: YearData[] = await getArchiveData();
+
+// 定义小部件标题为中文
+const widgetTitleText = "博客归档";
+const noArchivesText = "暂无归档记录。";
 ---
 
+{/* 归档小部件的根元素 */}
 <div class="archive-widget">
-  <h3 class="widget-title">Blog Archives</h3>
+  {/* 小部件标题 */}
+  <h3 class="widget-title">{widgetTitleText}</h3>
+  {/* 条件渲染：检查 archiveData 是否存在且包含数据 */}
   {archiveData && archiveData.length > 0 ? (
+    // 如果有归档数据，则渲染年份列表
     <ul class="year-list">
+      {/* 遍历每个年份的数据 */}
       {archiveData.map(yearData => (
         <li class="year-item">
+          {/* 年份链接，指向该年份的归档页面 */}
           <a href={`/blog/archive/${yearData.year}`} class="year-link">{yearData.year}</a>
-          {/* Placeholder link, actual archive page to be created later */}
+          {/* 条件渲染：检查当前年份下是否有月份数据 */}
           {yearData.months && yearData.months.length > 0 && (
+            // 如果有月份数据，则渲染月份列表
             <ul class="month-list">
+              {/* 遍历该年份下的每个月份数据 */}
               {yearData.months.map(monthData => (
                 <li class="month-item">
+                  {/* 月份链接，指向该年/该月的归档页面. 月份数字补全为两位 (例如 '01') */}
                   <a href={`/blog/archive/${yearData.year}/${String(monthData.monthNumber).padStart(2, '0')}`} class="month-link">
-                    {monthData.monthName}
+                    {monthData.monthName} {/* 显示中文月份名称, 例如 "一月" */}
                   </a>
-                  {/* Placeholder link, actual archive page to be created later */}
                 </li>
               ))}
             </ul>
@@ -28,73 +42,84 @@ const archiveData: YearData[] = await getArchiveData();
       ))}
     </ul>
   ) : (
-    <p>No archives available.</p>
+    // 如果没有归档数据，则显示提示信息
+    <p>{noArchivesText}</p>
   )}
 </div>
 
 <style>
+  /* 归档小部件容器样式 */
   .archive-widget {
-    padding: 1.5em;
-    background-color: rgba(var(--gray-light), 0.3); /* Similar to CommentForm bg */
-    border: 1px solid rgb(var(--gray-light));
-    border-radius: 8px;
-    margin-bottom: 2em;
+    padding: 1.5em; /* 内边距 */
+    background-color: rgba(var(--gray-light), 0.3); /* 背景色，参考评论表单 */
+    border: 1px solid rgb(var(--gray-light)); /* 边框颜色 */
+    border-radius: 8px; /* 圆角 */
+    margin-bottom: 2em; /* 下外边距 */
   }
 
+  /* 小部件标题样式 */
   .widget-title {
-    font-size: 1.25em; /* h5 equivalent */
-    color: rgb(var(--black));
-    margin-top: 0;
-    margin-bottom: 1em;
-    padding-bottom: 0.5em;
-    border-bottom: 1px solid rgb(var(--gray-light));
+    font-size: 1.25em; /* 字体大小，相当于 h5 */
+    color: rgb(var(--black)); /* 标题颜色 */
+    margin-top: 0; /* 上外边距 */
+    margin-bottom: 1em; /* 下外边距 */
+    padding-bottom: 0.5em; /* 标题下的内边距 */
+    border-bottom: 1px solid rgb(var(--gray-light)); /* 标题下的分隔线 */
   }
 
+  /* 年份和月份列表的基本样式重置 */
   .year-list, .month-list {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
+    list-style: none; /* 去除列表项目符号 */
+    padding-left: 0;  /* 去除左内边距 */
+    margin: 0;        /* 去除外边距 */
   }
 
+  /* 年份列表特定样式 (如果需要) */
   .year-list {
-    /* Styles specific to the year list if any */
+    /* 例如：可以添加特定的年份列表样式 */
   }
 
+  /* 年份列表项样式 */
   .year-item {
-    margin-bottom: 0.75em;
+    margin-bottom: 0.75em; /* 年份项之间的下外边距 */
   }
 
+  /* 年份链接样式 */
   .year-link {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: var(--accent-dark); /* Or var(--accent) */
-    text-decoration: none;
+    font-size: 1.1em; /* 字体大小 */
+    font-weight: bold; /* 粗体 */
+    color: var(--accent-dark); /* 链接颜色，可使用 --accent */
+    text-decoration: none; /* 去除下划线 */
   }
   .year-link:hover {
-    text-decoration: underline;
+    text-decoration: underline; /* 鼠标悬停时显示下划线 */
   }
 
+  /* 月份列表样式 */
   .month-list {
-    padding-left: 1em; /* Indent months under year */
-    margin-top: 0.5em;
+    padding-left: 1em; /* 月份列表向右缩进 */
+    margin-top: 0.5em;  /* 月份列表与年份之间的上外边距 */
   }
 
+  /* 月份列表项样式 */
   .month-item {
-    margin-bottom: 0.3em;
+    margin-bottom: 0.3em; /* 月份项之间的下外边距 */
   }
 
+  /* 月份链接样式 */
   .month-link {
-    font-size: 0.95em;
-    color: rgb(var(--gray-dark));
-    text-decoration: none;
+    font-size: 0.95em; /* 字体大小 */
+    color: rgb(var(--gray-dark)); /* 链接颜色 */
+    text-decoration: none; /* 去除下划线 */
   }
   .month-link:hover {
-    color: var(--accent);
-    text-decoration: underline;
+    color: var(--accent); /* 鼠标悬停时链接颜色 */
+    text-decoration: underline; /* 鼠标悬停时显示下划线 */
   }
 
+  /* 当没有归档数据时，提示信息的段落样式 */
   .archive-widget p {
-    font-style: italic;
-    color: rgb(var(--gray));
+    font-style: italic; /* 斜体 */
+    color: rgb(var(--gray)); /* 文字颜色 */
   }
 </style>
