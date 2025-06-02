@@ -5,6 +5,11 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 
+// Import React components
+// import CommentForm from '../components/CommentForm.jsx'; // Already imported
+// import CommentList from '../components/CommentList.jsx'; // Already imported
+import HeatmapDisplay from '../components/HeatmapDisplay.jsx'; // New import
+
 type Props = CollectionEntry<'blog'>['data'];
 
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
@@ -14,6 +19,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
+			/* ... existing styles ... */
 			main {
 				width: calc(100% - 2em);
 				max-width: 100%;
@@ -51,6 +57,15 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			.last-updated-on {
 				font-style: italic;
 			}
+            .comments-section {
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+            }
+            /* Style for the container of HeatmapDisplay if needed */
+            .heatmap-container {
+                margin-top: 30px;
+            }
 		</style>
 	</head>
 
@@ -76,10 +91,51 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 						<h1>{title}</h1>
 						<hr />
 					</div>
-					<slot />
+					<slot /> {/* Blog post content renders here */}
+
+                    <div id="comments-app" class="comments-section">
+                        {/* Comments rendered by script */}
+                    </div>
+
+                    {/* Heatmap Display - Needs client directive for React component */}
+                    <div class="heatmap-container">
+                        <HeatmapDisplay client:visible />
+                    </div>
 				</div>
 			</article>
 		</main>
 		<Footer />
+
+        <script type="module">
+            import React from 'react';
+            import ReactDOM from 'react-dom/client';
+            import CommentForm from '../components/CommentForm.jsx';
+            import CommentList from '../components/CommentList.jsx';
+            // HeatmapDisplay is now rendered via Astro directive, so no need to import here for ReactDOM.render
+
+            const CommentsApp = () => {
+                const [comments, setComments] = React.useState([
+                    { id: 1, author: 'Alice', text: 'Great post!', ipAddress: '192.168.0.1 (Mock)', timestamp: new Date(Date.now() - 100000).toISOString() },
+                    { id: 2, author: 'Bob', text: 'Thanks for sharing.', ipAddress: '203.0.113.42 (Mock)', timestamp: new Date().toISOString() }
+                ]);
+
+                const handleCommentSubmit = (newComment) => {
+                    setComments(prevComments => [newComment, ...prevComments]);
+                };
+
+                return (
+                    <>
+                        <CommentList comments={comments} />
+                        <CommentForm onCommentSubmit={handleCommentSubmit} />
+                    </>
+                );
+            };
+
+            const container = document.getElementById('comments-app');
+            if (container) {
+                const root = ReactDOM.createRoot(container);
+                root.render(<CommentsApp />);
+            }
+        </script>
 	</body>
 </html>
