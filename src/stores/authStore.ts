@@ -24,26 +24,45 @@ export const authStore = atom<AuthState>({
 
 // 设置用户会话信息 (通常在登录或会话恢复后调用)
 export function setAuthSession(user: User | null, session: Session | null) {
-  authStore.set({ user, session, isLoading: false, error: null });
-  console.log('AuthStore: 会话已更新', { user, session }); // AuthStore: Session updated
+  // 构建将要设置的新的状态对象
+  const newState: AuthState = { user, session, isLoading: false, error: null };
+  // 新增日志：记录函数调用、接收的参数以及将要设置到 store 中的完整新状态
+  console.log('AuthStore: 调用 setAuthSession。用户 ID:', user ? user.id : null, '会话是否存在:', !!session, '即将设置的新状态:', newState);
+  authStore.set(newState); // 更新 store 的状态
+  // 原有的日志 'AuthStore: 会话已更新' 已被上面的详细日志覆盖，可以移除或保留作为简化版日志
 }
 
 // 清除用户会话信息 (通常在登出后调用)
 export function clearAuthSession() {
-  authStore.set({ user: null, session: null, isLoading: false, error: null });
-  console.log('AuthStore: 会话已清除 (登出)'); // AuthStore: Session cleared (logout)
+  // 构建将要设置的新的状态对象 (用户和会话都为 null)
+  const newState: AuthState = { user: null, session: null, isLoading: false, error: null };
+  // 新增日志：记录函数调用以及将要设置到 store 中的完整新状态
+  console.log('AuthStore: 调用 clearAuthSession。即将设置的新状态:', newState);
+  authStore.set(newState); // 更新 store 的状态
+  // 原有的日志 'AuthStore: 会话已清除 (登出)' 已被上面的详细日志覆盖
 }
 
 // 设置加载状态
 export function setAuthLoading(isLoading: boolean) {
-  authStore.set({ ...authStore.get(), isLoading });
-  console.log('AuthStore: 加载状态设置为', isLoading); // AuthStore: Loading state set to
+  const currentState = authStore.get(); // 获取当前 store 的状态
+  // 构建新的状态对象，仅更新 isLoading 字段，其余保持不变
+  const newState: AuthState = { ...currentState, isLoading };
+  // 新增日志：记录函数调用、接收的 isLoading 参数以及将要设置的完整新状态
+  console.log('AuthStore: 调用 setAuthLoading。isLoading 参数:', isLoading, '即将设置的新状态:', newState);
+  authStore.set(newState); // 更新 store 的状态
+  // 原有的日志 'AuthStore: 加载状态设置为' 已被上面的详细日志覆盖
 }
 
 // 设置错误信息
 export function setAuthError(errorMessage: string | null) {
-    authStore.set({ ...authStore.get(), error: errorMessage, isLoading: false });
-    console.log('AuthStore: 错误信息已设置', errorMessage); // AuthStore: Error set
+  const currentState = authStore.get(); // 获取当前 store 的状态
+  // 构建新的状态对象：设置错误信息，并将 isLoading 设置为 false。
+  // 通常，发生认证错误时，也应该清除用户和会话信息。
+  const newState: AuthState = { ...currentState, user: null, session: null, error: errorMessage, isLoading: false }; 
+  // 新增日志：记录函数调用、接收的 errorMessage 参数以及将要设置的完整新状态
+  console.log('AuthStore: 调用 setAuthError。错误信息参数:', errorMessage, '即将设置的新状态:', newState);
+  authStore.set(newState); // 更新 store 的状态
+  // 原有的日志 'AuthStore: 错误信息已设置' 已被上面的详细日志覆盖
 }
 
 // (这里的 console.log 仅用于开发和调试，生产环境中可以移除)

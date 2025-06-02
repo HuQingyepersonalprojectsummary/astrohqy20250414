@@ -41,8 +41,8 @@ const HeatmapDisplay = () => {
   // 由于未能成功集成 react-simple-heatmap 库，使用此组件展示模拟效果
   const FallbackHeatmapVisualization = () => (
     // 可视化区域的容器 div
-    <div style={{
-        width: '100%',
+    <div style={{ 
+        width: '100%', 
         height: 'calc(100% - 40px)', // 高度计算，减去标题大致高度
         position: 'relative', // 相对定位
         border: '1px dashed rgb(var(--gray-light))', // 虚线边框
@@ -68,12 +68,12 @@ const HeatmapDisplay = () => {
       ))}
       {/* 模拟热力图的说明文字 */}
       <p style={{
-          textAlign: 'center',
-          color: 'rgb(var(--gray))',
-          fontSize: '0.9em',
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
+          textAlign: 'center', 
+          color: 'rgb(var(--gray))', 
+          fontSize: '0.9em', 
+          position: 'absolute', 
+          top: '50%', 
+          left: '50%', 
           transform: 'translate(-50%, -50%)'
       }}>
         {fallbackLegendText}

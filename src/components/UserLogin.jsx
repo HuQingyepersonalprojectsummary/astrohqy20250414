@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabaseClient'; // 导入 Supabase 客户�
 const UserLogin = () => {
   // State: email (原 username), password 用于存储用户输入的邮箱和密码
   // 注意: Supabase 默认使用邮箱进行登录，因此将原 username 字段改为 email
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); 
   const [password, setPassword] = useState('');
   // 新增 State: loading 用于处理提交加载状态，error 用于显示错误信息，message 用于显示操作结果信息
   const [loading, setLoading] = useState(false);
@@ -69,7 +69,7 @@ const UserLogin = () => {
   };
   const errorStyle = { color: 'red', marginBottom: '15px', textAlign: 'center' };
   const messageStyle = { color: 'green', marginBottom: '15px', textAlign: 'center' };
-
+  
   // 定义UI文本 (中文)
   const formTitleText = "用户登录";
   // const usernameLabelText = "用户名"; // 改为邮箱登录
@@ -112,10 +112,10 @@ const UserLogin = () => {
           />
         </div>
         {/* 提交按钮 */}
-        <button
-          type="submit"
+        <button 
+          type="submit" 
           style={buttonStyle}
-          onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }}
+          onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }} 
           onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
           disabled={loading}
         >

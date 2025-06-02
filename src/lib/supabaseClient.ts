@@ -34,12 +34,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // 这将为您的数据库表、列和函数提供类型提示和自动完成，从而提高开发效率和代码质量。
 // 要生成这些类型，通常需要在安装 Supabase CLI 后运行类似 `supabase gen types typescript --project-id <your-project-id> > src/lib/database.types.ts` 的命令。
 // 请查阅最新的 Supabase 文档以获取准确的命令和指导。
-
-// src/lib/supabaseClient.ts
-import { createClient } from '@supabase/supabase-js'
-
-export const supabase = createClient(
-  import.meta.env.PUBLIC_SUPABASE_URL,
-  import.meta.env.PUBLIC_SUPABASE_ANON_KEY
-)
-

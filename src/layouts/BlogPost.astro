@@ -22,14 +22,15 @@ type Props = CollectionEntry<'blog'>['data'];
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 // Astro.props.id 通常包含基于文件路径的 slug (对于 src/content/blog/ 中的文章)
 // 这个 slug 将用于唯一标识文章，以便关联评论
-const postSlug = Astro.props.id;
+const postSlug = Astro.props.id; 
+console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.id": Astro.props.id, "title": title }); // 新增日志
 // 如果您的 frontmatter 中有明确定义的 slug 字段，可以使用 Astro.props.data.slug
 // 例如: const postSlug = Astro.props.data.slug;
 // 请确保 postSlug 是一个能够唯一标识文章的字符串。
 ---
 
 {/* HTML 文档的 lang 属性设置为 "zh-CN" (中文) */}
-<html lang="zh-CN">
+<html lang="zh-CN"> 
 	<head>
 		{/* BaseHead 组件，用于生成页面的 SEO 相关 meta 标签和标题 */}
 		<BaseHead title={title} description={description} />
@@ -40,7 +41,7 @@ const postSlug = Astro.props.id;
             .main-content-area { display: flex; flex-wrap: wrap; gap: 2em; width: 100%; max-width: 1100px; margin: 0 auto; padding: 1em; flex-grow: 1; }
             .article-column { flex: 3; min-width: 70%; }
             .sidebar-column { flex: 1; min-width: 250px; }
-            @media (max-width: 960px) {
+            @media (max-width: 960px) { 
                 .main-content-area { flex-direction: column; align-items: center; }
                 .article-column { min-width: 100%; order: 1; }
                 .sidebar-column { min-width: 100%; max-width: 720px; order: 2; }
@@ -59,13 +60,13 @@ const postSlug = Astro.props.id;
 	<body class="page-wrapper">
 		<Header />
 		<main class="main-content-area">
-            <div class="article-column">
+            <div class="article-column"> 
                 <article>
                     <div class="hero-image">
                         {/* 在 img 的 alt 属性中也使用 title，提高可访问性 */}
                         {heroImage && <img width={1020} height={510} src={heroImage} alt={title} />}
                     </div>
-                    <div class="prose">
+                    <div class="prose"> 
                         <div class="title">
                             <div class="date">
                                 <FormattedDate date={pubDate} />
@@ -74,7 +75,7 @@ const postSlug = Astro.props.id;
                             <h1>{title}</h1>
                             <hr />
                         </div>
-                        <slot />
+                        <slot /> 
                         {/* 评论区容器，通过 data-post-slug 属性传递 postSlug 给客户端脚本 */}
                         <div id="comments-app" class="comments-section" data-post-slug={postSlug}>
                             {/* 注释：评论表单和列表将由下面的客户端脚本渲染到此 div 中 */}
@@ -85,14 +86,15 @@ const postSlug = Astro.props.id;
                     </div>
                 </article>
             </div>
-            <aside class="sidebar-column">
+            <aside class="sidebar-column"> 
                 <ArchiveWidget />
             </aside>
 		</main>
 		<Footer />
-
+        
         {/* 用于评论功能的客户端 React 脚本 */}
         <script type="module">
+            console.log("BlogPost.astro: 客户端评论脚本已加载。"); // 新增日志
             // 导入 React 相关的 hook 和 ReactDOM 用于渲染组件
             import React, { useState, useCallback } from 'react'; // 添加 useState 和 useCallback
             import ReactDOM from 'react-dom/client';
@@ -102,7 +104,7 @@ const postSlug = Astro.props.id;
 
             // CommentsApp 组件：作为评论区 (表单和列表) 的根组件
             // 它接收 postSlug 作为 prop，用于将评论与特定文章关联
-            const CommentsApp = ({ postSlug }) => {
+            const CommentsApp = ({ postSlug }) => { 
                 // refreshKey state 用于在提交新评论后强制 CommentList 组件刷新
                 // 当 refreshKey 的值改变时，CommentList 的 useEffect 会重新运行，从而获取最新的评论
                 const [refreshKey, setRefreshKey] = useState(0);
@@ -114,6 +116,8 @@ const postSlug = Astro.props.id;
                     console.log('CommentsApp (BlogPost.astro): 评论已提交，正在触发 CommentList 刷新...'); // 日志：评论已提交，准备刷新
                     setRefreshKey(prevKey => prevKey + 1); // 更新 refreshKey (递增) 以触发刷新
                 }, []); // 空依赖数组意味着此回调函数在组件的生命周期内不会改变引用
+                
+                console.log("BlogPost.astro - CommentsApp: 正在渲染，postSlug:", postSlug, "refreshKey:", refreshKey); // 新增日志
 
                 // 渲染评论列表 (CommentList) 和评论表单 (CommentForm)
                 return (
@@ -132,7 +136,8 @@ const postSlug = Astro.props.id;
             if (container) {
                 // 从容器元素的 data-post-slug 属性中读取当前文章的 slug
                 const postSlugFromDOM = container.dataset.postSlug;
-
+                console.log({ "BlogPost.astro - Client Script - postSlugFromDOM": postSlugFromDOM }); // 新增日志
+                
                 // 如果成功获取到 postSlug
                 if (postSlugFromDOM) {
                     const root = ReactDOM.createRoot(container); // 创建 React 根
@@ -140,11 +145,11 @@ const postSlug = Astro.props.id;
                     root.render(<CommentsApp postSlug={postSlugFromDOM} />);
                 } else {
                     // 如果未能从 DOM 中获取 postSlug，则在控制台报错并在页面上显示错误信息
-                    console.error("评论区错误：未能从 DOM 中获取 postSlug。请确保 <div id='comments-app'> 具有 'data-post-slug' 属性。");
-                    container.innerHTML = "<p>无法加载评论：缺少文章标识。</p>"; // 提示：无法加载评论，缺少文章标识
+                    console.error("评论区错误：未能从 DOM 中获取 postSlug。请确保 <div id='comments-app'> 具有 'data-post-slug' 属性且其值不为空。");
+                    container.innerHTML = "<p>无法加载评论：缺少文章标识 (postSlug 未找到于DOM)。</p>"; // 提示：无法加载评论，缺少文章标识
                 }
             } else {
-                 console.warn("评论区容器 (div#comments-app) 未在 DOM 中找到。"); // 警告：评论区容器未找到
+                 console.warn("评论区容器 (div#comments-app) 未在 DOM 中找到。评论功能将无法加载。"); // 警告：评论区容器未找到
             }
         </script>
 	</body>

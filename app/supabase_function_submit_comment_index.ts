@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       });
     }
     // 限制评论长度，例如最大 5000 字符
-    if (content.length > 5000) {
+    if (content.length > 5000) { 
         return new Response(JSON.stringify({ error: '评论内容过长，最长限制5000字符。' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
@@ -70,12 +70,12 @@ Deno.serve(async (req) => {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', // 从环境变量获取 Supabase URL
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', // 从环境变量获取 Supabase anon key
-      {
-        global: {
-          headers: {
+      { 
+        global: { 
+          headers: { 
             Authorization: req.headers.get('Authorization')! // 将从客户端请求接收到的 Authorization header (包含用户 JWT) 传递给函数内的 Supabase 客户端
-          }
-        }
+          } 
+        } 
       }
     );
     console.log("Supabase client initialized in function."); // 日志：Supabase 客户端初始化成功
@@ -120,8 +120,8 @@ Deno.serve(async (req) => {
     const { data: commentData, error: insertError } = await supabaseClient
       .from('comments')
       .insert(newComment)
-      .select()
-      .single();
+      .select() 
+      .single(); 
 
     // 如果插入过程中发生错误
     if (insertError) {

@@ -10,19 +10,13 @@ const internalLinks = [
     { href: "/about", text: "关于" }
 ];
 
-// 定义社交媒体链接的 sr-only (屏幕阅读器) 文本 (中文)
-const socialLinkSrTexts = {
-    mastodon: "在 Mastodon 上关注 Astro",
-    twitter: "在 Twitter 上关注 Astro",
-    github: "访问 Astro 的 GitHub 仓库"
-};
-
 // 定义“退出登录”按钮的文本
 const logoutButtonText = "退出登录";
 // 定义“登录”和“注册”链接的文本
 const loginLinkText = "登录";
 const registerLinkText = "注册";
-const loadingUserText = "加载中..."; // 用户信息加载中状态
+const loadingUserText = "加载中..."; // 用户信息加载中状态 (直接使用默认值)
+
 ---
 
 {/* 页面头部容器 */}
@@ -30,8 +24,8 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态
 	{/* 导航栏 */}
 	<nav>
 		{/* 站点标题/Logo，链接到首页 */}
-		<h2><a href="/">{SITE_TITLE}</a></h2>
-
+		<h2><a href="/">{SITE_TITLE}</a></h2> {/* 使用从 consts.ts 导入的站点标题 */}
+		
 		{/* 内部页面导航链接区域 */}
 		<div class="internal-links">
             {internalLinks.map(link => (
@@ -48,24 +42,7 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态
             <button type="button" id="logout-button" class="logout-button">{logoutButtonText}</button>
         </div>
 
-		{/* 社交媒体链接区域 */}
-		<div class="social-links">
-			{/* Mastodon 链接 */}
-			<a href="https://m.webtoo.ls/@astro" target="_blank" title="Mastodon">
-				<span class="sr-only">{socialLinkSrTexts.mastodon}</span>
-				<svg viewBox="0 0 16 16" aria-hidden="true" width="24" height="24" astro-icon="social/mastodon"><path fill="currentColor" d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"></path></svg>
-			</a>
-			{/* Twitter 链接 */}
-			<a href="https://twitter.com/astrodotbuild" target="_blank" title="Twitter">
-				<span class="sr-only">{socialLinkSrTexts.twitter}</span>
-				<svg viewBox="0 0 16 16" aria-hidden="true" width="24" height="24" astro-icon="social/twitter"><path fill="currentColor" d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"></path></svg>
-			</a>
-			{/* GitHub 链接 */}
-			<a href="https://github.com/withastro/astro" target="_blank" title="GitHub">
-				<span class="sr-only">{socialLinkSrTexts.github}</span>
-				<svg viewBox="0 0 16 16" aria-hidden="true" width="24" height="24" astro-icon="social/github"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
-			</a>
-		</div>
+		{/* 社交媒体链接区域已被移除 */}
 	</nav>
 </header>
 
@@ -75,90 +52,78 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态
     import { authStore } from '../../stores/authStore';    // 导入全局认证状态存储
     import { initializeAuthListener } from '../../lib/authHandler'; // 导入认证状态监听器初始化函数
 
-    // 初始化 Supabase 认证状态监听器 (确保只执行一次)
-    // 这个函数会处理初始会话加载和后续的认证状态变化，并更新 authStore
-    initializeAuthListener();
+    initializeAuthListener(); // 初始化 Supabase 认证状态监听器
 
-    // 获取相关的 DOM 元素
     const userSessionControls = document.getElementById('user-session-controls');
     const userIdentifierDisplay = document.getElementById('user-identifier');
     const logoutButton = document.getElementById('logout-button');
     const loginLink = document.getElementById('login-link');
     const registerLink = document.getElementById('register-link');
-    const loadingUserText = Astro.props.loadingUserText || "加载中..."; // 从 props 获取，或使用默认值 "加载中..."
+    // loadingUserText 从 frontmatter 传递下来，并在 userIdentifierDisplay 初始化时使用
+    // currentLoadingUserText 用于在脚本中动态设置加载文本，确保一致性
+    const currentLoadingUserText = "{loadingUserText}"; // Astro 会将 frontmatter 变量注入
 
-    // 更新 UI 的函数，根据认证状态显示或隐藏相关元素
     const updateAuthUI = (authState) => {
+        // 新增日志: 记录传入的 authState
+        console.log("Header.astro - updateAuthUI: 接收到 authState:", authState);
+
         if (!userSessionControls || !userIdentifierDisplay || !loginLink || !registerLink) {
-            // 如果关键元素不存在，则不执行UI更新 (防御性编程)
             console.warn("Header Auth UI: 部分DOM元素未找到，UI可能不会正确更新。");
             return;
         }
 
         if (authState.isLoading) {
-            // 正在加载认证状态
-            userIdentifierDisplay.textContent = loadingUserText; // 显示 "加载中..."
-            userSessionControls.style.display = 'flex'; // 显示包含加载文本的区域
-            loginLink.style.display = 'none'; // 隐藏登录链接
-            registerLink.style.display = 'none'; // 隐藏注册链接
-            if(logoutButton) logoutButton.style.display = 'none'; // 隐藏登出按钮，因为还在加载状态
+            // 新增日志: 指明当前应用的 UI 状态
+            console.log("Header.astro - updateAuthUI: 正在应用“加载中”的UI状态。");
+            userIdentifierDisplay.textContent = currentLoadingUserText; // 使用脚本中定义的加载文本
+            userSessionControls.style.display = 'flex'; 
+            loginLink.style.display = 'none';
+            registerLink.style.display = 'none';
+            if(logoutButton) logoutButton.style.display = 'none'; 
         } else if (authState.user) {
-            // 用户已登录
-            userSessionControls.style.display = 'flex'; // 显示用户会话控件
+            // 新增日志: 指明当前应用的 UI 状态
+            console.log("Header.astro - updateAuthUI: 正在应用“用户已登录”的UI状态。用户:", authState.user.email);
+            userSessionControls.style.display = 'flex'; 
             userIdentifierDisplay.textContent = authState.user.email || '用户'; // 显示用户邮箱或通用文本 "用户"
-            if(logoutButton) logoutButton.style.display = 'inline-block'; // 显示登出按钮
-            loginLink.style.display = 'none'; // 隐藏登录链接
-            registerLink.style.display = 'none'; // 隐藏注册链接
+            if(logoutButton) logoutButton.style.display = 'inline-block'; 
+            loginLink.style.display = 'none'; 
+            registerLink.style.display = 'none'; 
         } else {
-            // 用户未登录
-            userSessionControls.style.display = 'none'; // 隐藏用户会话控件
-            userIdentifierDisplay.textContent = ''; // 清空用户标识
-            loginLink.style.display = 'inline'; // 显示登录链接 (Astro HeaderLink 默认为 inline)
-            registerLink.style.display = 'inline'; // 显示注册链接
+            // 新增日志: 指明当前应用的 UI 状态
+            console.log("Header.astro - updateAuthUI: 正在应用“用户未登录”的UI状态。");
+            userSessionControls.style.display = 'none'; 
+            userIdentifierDisplay.textContent = ''; 
+            loginLink.style.display = 'inline'; 
+            registerLink.style.display = 'inline'; 
         }
     };
 
-    // 订阅 authStore 的状态变化
-    // 当 authStore 中的状态改变时，此回调函数将被执行
-    const unsubscribe = authStore.subscribe(state => {
-        console.log('Header Auth UI: authStore 状态改变', state); // authStore 状态改变日志
+    const unsubscribe = authStore.subscribe(state => { 
+        // 更新日志信息，使其更明确
+        console.log('Header.astro - authStore.subscribe: authStore 状态已改变，新状态:', state);
         updateAuthUI(state);
     });
 
-    // 处理登出按钮点击事件
-    const handleLogout = async () => {
-        if(logoutButton) logoutButton.disabled = true; // 禁用按钮防止多次点击
-        const { error } = await supabase.auth.signOut(); // 调用 Supabase 登出方法
+    const handleLogout = async () => { 
+        if(logoutButton) logoutButton.disabled = true;
+        console.log("Header.astro - handleLogout: 用户点击登出按钮。"); // 新增日志
+        const { error } = await supabase.auth.signOut();
         if (error) {
-            console.error('登出错误:', error.message); // 登出错误日志
-            alert('登出失败: ' + error.message); // 向用户显示错误
-            if(logoutButton) logoutButton.disabled = false; // 如果出错，重新启用按钮
+            console.error('Header.astro - handleLogout: 登出时发生错误:', error.message); // 更新日志信息
+            alert('登出失败: ' + error.message); 
+            if(logoutButton) logoutButton.disabled = false;
         } else {
-            console.log('用户已成功登出 (通过Header按钮)'); // 用户成功登出日志
-            // authStore 将通过 onAuthStateChange (在 authHandler.ts 中) 自动更新,
-            // UI 将通过 store 订阅自动响应。
-            // 无需手动调用 updateAuthUI(null) 或派发自定义事件。
+            console.log('Header.astro - handleLogout: 用户已成功从 Supabase 登出。UI 将通过 authStore 更新。'); // 更新日志信息
         }
     };
 
-    // 添加登出按钮的事件监听器
-    if (logoutButton) {
+    if (logoutButton) { // 添加登出按钮的事件监听器
         logoutButton.addEventListener('click', handleLogout);
     }
-
-    // 注意：由于 initializeAuthListener 已经处理了初始加载时的状态，
-    // 并且 onAuthStateChange 会持续更新 store，
-    // 因此这里不再需要之前版本中的 supabase.auth.getSession() 和自定义 'authChange' 事件监听器。
-    // authStore.subscribe 会处理所有来自 authHandler 的状态更新。
-
-    // Astro 组件的 script 标签中的代码在每次页面导航时可能会重新执行。
-    // initializeAuthListener 内部有防止重复初始化的逻辑。
-    // unsubscribe() 理论上应该在组件“卸载”时调用，但在 Astro 页面导航模型中，
-    // 脚本的“卸载”行为不如 SPA 直接。对于全局监听器，通常保持活动状态。
 </script>
 
 <style>
-	/* 页头整体样式 */
+	/* 头部整体样式 */
 	header { margin: 0; padding: 0 1em; background: white; box-shadow: 0 2px 8px rgba(var(--black), 5%); }
 	/* 导航栏样式 */
 	nav { display: flex; align-items: center; justify-content: space-between; }
@@ -166,35 +131,20 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态
 	h2 { margin: 0; font-size: 1em; }
 	/* 站点标题链接样式 */
 	h2 a, h2 a.active { text-decoration: none; font-weight: 700; color: rgb(var(--black)); }
-	/* 社交链接和内部链接容器的 flex 布局 */
-	.social-links,
-	.internal-links { display: flex; align-items: center; /* 确保链接和按钮垂直对齐 */ }
-    .internal-links { gap: 1em; /* 内部链接之间的间距 */ }
-	/* 社交链接 (a 标签) 样式 */
-	.social-links a { display: block; padding: 0.5em; color: rgb(var(--gray)); text-decoration: none; }
-	/* 社交链接鼠标悬停效果 */
-	.social-links a:hover { color: rgb(var(--gray-dark)); }
+	/* 内部链接容器的 flex 布局 */
+	.internal-links { display: flex; align-items: center; gap: 1em; }
+    /* .social-links 相关的样式可以保留或移除，如果确认不再使用 .social-links 类名 */
+	/* .social-links a { display: block; padding: 0.5em; color: rgb(var(--gray)); text-decoration: none; } */
+	/* .social-links a:hover { color: rgb(var(--gray-dark)); } */
 
     /* 登出按钮样式 */
     .logout-button {
-        background-color: var(--accent);
-        color: white;
-        border: none;
-        padding: 0.4em 0.8em;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9em;
-        transition: background-color 0.2s ease;
+        background-color: var(--accent); color: white; border: none;
+        padding: 0.4em 0.8em; border-radius: 4px; cursor: pointer;
+        font-size: 0.9em; transition: background-color 0.2s ease;
     }
-    .logout-button:hover {
-        background-color: var(--accent-dark);
-    }
-    .logout-button:disabled { /* 登出按钮禁用时的样式 */
-        background-color: var(--gray);
-        cursor: not-allowed;
-    }
-    .auth-link {
-        /* 登录/注册链接的样式，可以根据需要调整 */
-        margin-left: 0.5em; /* 与其他内部链接保持一些间距 */
-    }
+    .logout-button:hover { background-color: var(--accent-dark); }
+    .logout-button:disabled { background-color: var(--gray); cursor: not-allowed; }
+    /* 登录/注册链接的样式 */
+    .auth-link { margin-left: 0.5em; }
 </style>

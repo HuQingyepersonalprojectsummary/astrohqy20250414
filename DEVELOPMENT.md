@@ -248,5 +248,38 @@ Vercel 将克隆您的仓库，安装依赖，构建您的 Astro 站点，并将
 **Node.js 版本**:
 如果您的项目对 Node.js 版本有特定要求，您可以在 Vercel 的项目设置中指定 Node.js 版本 (Project Settings -> General -> Node.js Version)。
 
+**重要：为 Vercel 配置环境变量**
+
+为了让您部署到 Vercel 的应用能够成功连接到 Supabase 后端，您需要在 Vercel 项目设置中配置必要的环境变量。这些变量与您在本地 `.env` 文件中使用的变量相对应。
+
+操作步骤如下：
+
+1.  **登录 Vercel**: 打开 [vercel.com](https://vercel.com/) 并登录。
+2.  **选择您的项目**: 在 Vercel 仪表盘中，选择您部署的此 Astro 博客项目。
+3.  **进入项目设置**:
+    *   点击项目页面顶部的 **Settings** (设置) 选项卡。
+    *   在左侧导航栏中，选择 **Environment Variables** (环境变量)。
+4.  **添加环境变量**:
+    您需要添加以下两个环境变量。请确保变量名前缀 `PUBLIC_` 被保留，这对于 Astro 在客户端代码中访问这些变量至关重要：
+
+    *   **第一个变量:**
+        *   **Name (名称)**: `PUBLIC_SUPABASE_URL`
+        *   **Value (值)**: 粘贴您从 Supabase 项目的 API 设置中获取的 **Project URL**。
+        *   **Environment(s)**: 通常建议为 "Production", "Preview", 和 "Development" 环境都勾选，除非您有为不同环境使用不同 Supabase 项目的特定需求。
+        *   点击 **Save** (或 Add)。
+
+    *   **第二个变量:**
+        *   **Name (名称)**: `PUBLIC_SUPABASE_ANON_KEY`
+        *   **Value (值)**: 粘贴您从 Supabase 项目的 API 设置中获取的 **`anon` `public` key**。
+        *   **Environment(s)**: 同样，为所有需要的环境勾选。
+        *   点击 **Save** (或 Add)。
+
+5.  **触发重新部署 (如果需要)**:
+    *   如果在添加这些环境变量之前您已经进行过部署，Vercel 可能不会自动使用新的环境变量重新构建当前部署。
+    *   为了确保新的环境变量生效，您可以手动触发一次新的部署。通常，向连接到 Vercel 的 Git 主分支（或其他受监控的分支）推送一次新的提交会自动触发部署。
+    *   或者，您可以在 Vercel 项目的 **Deployments** (部署) 选项卡中找到特定部署，并使用 "Redeploy" (重新部署) 选项。
+
+配置完成后，您部署在 Vercel 上的 Astro 应用就能够使用这些环境变量来初始化 Supabase 客户端并与您的 Supabase 后端进行通信了。
+
 ---
 希望本文档能帮助您更好地理解和开发此项目！

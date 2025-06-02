@@ -2,12 +2,10 @@
 // 获取当前日期，用于页脚的年份显示
 const today = new Date();
 // 定义页脚版权信息中的名字，可以替换为您自己的名字或站点名称
-const siteOwnerName = "博主名称或站点名称"; // Your name here -> 替换为中文
-const allRightsReservedText = "版权所有。"; // All rights reserved. -> 替换为中文
+const siteOwnerName = "博主名称或站点名称"; 
+const allRightsReservedText = "版权所有。"; 
 
 // 定义社交/平台链接的sr-only（屏幕阅读器）文本和显示文本
-// 注意: Astro 的 SVG 图标组件 (astro-icon) 可能有其自身的本地化方式或不直接支持多语言 sr-only 文本。
-// 此处的 sr-only 文本主要针对普通 <a> 标签。
 const socialLinks = [
     { platform: "Mastodon", srText: "在 Mastodon 上关注 Astro", href: "https://m.webtoo.ls/@astro", iconType: "svg" },
     { platform: "Twitter", srText: "在 Twitter 上关注 Astro", href: "https://twitter.com/astrodotbuild", iconType: "svg" },
@@ -16,7 +14,9 @@ const socialLinks = [
     { platform: "Twitch", srText: "Twitch 频道", href: "#", iconType: "text", displayText: "Twitch" },
     { platform: "YouTube", srText: "YouTube 频道", href: "#", iconType: "text", displayText: "YouTube" },
     { platform: "Discord", srText: "Discord 服务器", href: "#", iconType: "text", displayText: "Discord" },
-    { platform: "Steam", srText: "Steam 个人资料", href: "#", iconType: "text", displayText: "Steam" }
+    { platform: "Steam", srText: "Steam 个人资料", href: "#", iconType: "text", displayText: "Steam" },
+    // 新增 RSS Feed 链接
+    { platform: "RSS", srText: "订阅博客 RSS Feed", href: "/rss.xml", iconType: "text", displayText: "RSS" } // 或者使用一个 Unicode RSS 符号作为 displayText，例如 "" (U+F09E)
 ];
 ---
 
@@ -82,7 +82,7 @@ const socialLinks = [
 		color: rgb(var(--gray-dark)); /* 鼠标悬停时链接颜色变深 */
 	}
 	/* SVG 图标样式 (确保文本链接不影响 SVG 大小) */
-	.social-links svg {
+	.social-links svg { 
 		width: 32px;
 		height: 32px;
 	}
@@ -91,6 +91,7 @@ const socialLinks = [
         font-size: 0.9em; /* 字体大小调整 */
         padding: 0.2em 0.4em; /* 内边距 */
         border: 1px solid transparent; /* 透明边框，用于可能的悬停效果 */
+        line-height: 1; /* 确保与SVG图标在基线上对齐良好 */
     }
     /* 文本链接的鼠标悬停效果 (可选) */
     .social-links a:hover span[aria-hidden="true"] {

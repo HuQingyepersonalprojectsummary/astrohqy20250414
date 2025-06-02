@@ -40,7 +40,7 @@ const posts = (await getCollection('blog')).sort(
 				transition: 0.2s ease; /* 平滑过渡效果 */
 			}
 			/* 首个列表项的特殊样式 (通常用于突出显示最新文章) */
-			ul li:first-child {
+			ul li:first-child { 
 				width: 100%; /* 占满整行 */
 				margin-bottom: 1rem; /* 与下方内容的间距 */
 				text-align: center; /* 文本居中 */
@@ -80,7 +80,7 @@ const posts = (await getCollection('blog')).sort(
 			ul a:hover img {
 				box-shadow: var(--box-shadow); /* 使用主题定义的阴影 */
 			}
-
+			
             /* 两栏布局的新增/调整样式 */
             /* 页面整体包裹器 */
             .page-wrapper {
@@ -89,7 +89,7 @@ const posts = (await getCollection('blog')).sort(
                 min-height: 100vh; /* 最小高度为视口高度 */
             }
             /* 主内容区域，包含博文列表和侧边栏 */
-            .main-content-area {
+            .main-content-area { 
                 display: flex; /* flex 布局 */
                 flex-wrap: wrap; /* 允许换行 */
                 gap: 2em; /* 列间距 */
@@ -100,18 +100,18 @@ const posts = (await getCollection('blog')).sort(
                 flex-grow: 1; /* 占据可用垂直空间 */
             }
             /* 博文列表列 */
-            .blog-list-column {
+            .blog-list-column { 
                 flex: 3; /* 占据较大比例空间 */
                 min-width: 70%; /* 最小宽度，防止被过度挤压 */
             }
             /* 侧边栏列 */
-            .sidebar-column {
+            .sidebar-column { 
                 flex: 1; /* 占据较小比例空间 */
                 min-width: 250px; /* 侧边栏最小宽度 */
             }
 
             /* 响应式设计：针对小屏幕的媒体查询 */
-			@media (max-width: 960px) {
+			@media (max-width: 960px) { 
                 .main-content-area {
                     flex-direction: column; /* 垂直堆叠 */
                     align-items: center; /* 居中对齐 */
@@ -126,7 +126,7 @@ const posts = (await getCollection('blog')).sort(
                     order: 2; /* 侧边栏在内容下方 */
                 }
                 /* 调整列表在堆叠视图中的样式 */
-				ul {
+				ul { 
 					gap: 0.5em; /* 减小列表项间距 */
 				}
 				ul li {

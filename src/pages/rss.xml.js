@@ -20,7 +20,7 @@ export async function GET(context) {
 		description: SITE_DESCRIPTION,
 		// site: 站点的完整 URL。`context.site` 会从 astro.config.mjs 中的 `site` 配置获取。
 		// 如果 astro.config.mjs 中的 `site` 未配置，RSS feed 中的链接可能是相对路径，这可能导致问题。
-		site: context.site,
+		site: context.site, 
 		// items: RSS feed 中的项目列表，通常对应于博客文章
 		// 使用 posts.map 遍历获取到的文章，并将每篇文章转换为 RSS item 对象
 		items: posts.map((post) => ({
@@ -30,7 +30,7 @@ export async function GET(context) {
 			// link: 文章的永久链接。这里假设博客文章的 URL 结构是 /blog/[post.id]/
 			// post.id 通常是基于文件名的，例如 'my-first-post.md' -> 'my-first-post'
 			// 如果你的 URL 结构不同 (例如使用 post.slug)，请相应调整此处的链接格式
-			link: `/blog/${post.id}/`,
+			link: `/blog/${post.id}/`, 
             // pubDate: 文章的发布日期，rss 包会自动从 post.data.pubDate 获取
             // 如果 pubDate 格式不正确或缺失，可能会导致 RSS feed 生成错误或验证失败
 

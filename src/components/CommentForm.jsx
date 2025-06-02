@@ -8,8 +8,10 @@ import { supabase } from '../../lib/supabaseClient'; // 导入 Supabase 客户�
 // - postSlug: String, 当前文章的 slug，用于将评论与文章关联
 // - onCommentSubmitted: Function, 评论成功提交后调用的回调函数 (例如，用于触发评论列表刷新)
 const CommentForm = ({ postSlug, onCommentSubmitted }) => {
+  // 新增日志: 组件加载和 props
+  console.log("CommentForm.jsx: 组件已加载，Props:", { postSlug });
+
   // 从 authStore 获取当前认证状态 (user 对象和 isLoading 标志)
-  // useStore 会使组件在 authStore 状态变化时自动重新渲染
   const { user, isLoading: authIsLoading } = useStore(authStore);
 
   // State: commentText 用于存储用户在文本域中输入的评论内容
@@ -24,13 +26,15 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
   // 处理表单提交事件 (异步函数)
   const handleSubmit = async (e) => {
     e.preventDefault(); // 阻止表单默认提交行为
-    // 如果评论内容去除首尾空格后为空，则设置错误并返回
+    
+    // 新增日志: handleSubmit 开始，及用户和内容状态
+    console.log("CommentForm.jsx - handleSubmit: 表单提交开始。内容长度:", commentText.trim().length, "用户:", user?.email);
+
     if (!commentText.trim()) {
       setError("评论内容不能为空。"); // 错误：评论内容不能为空
       return;
     }
-    // 如果用户未登录 (再次检查，尽管UI应该已经阻止了未登录用户看到表单)
-    if (!user) {
+    if (!user) { 
       setError("请先登录后再发表评论。"); // 错误：请先登录
       return;
     }
@@ -41,72 +45,50 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
 
     try {
       // 调用名为 'submit-comment' 的 Supabase Edge Function
-      // Edge Function 应该负责：
-      // 1. 验证用户身份 (Supabase 客户端会自动传递 Authorization header)
-      // 2. 获取用户 IP 地址 (在 Edge Function 环境中)
-      // 3. 将评论内容、postSlug、用户ID、IP地址等存入数据库
       const { data, error: functionError } = await supabase.functions.invoke('submit-comment', {
-        body: {
+        body: { 
           postSlug: postSlug,     // 当前文章的 slug
           content: commentText    // 评论内容
         },
       });
 
+      // 新增日志: Edge Function 调用完成情况
+      console.log("CommentForm.jsx - handleSubmit: Edge Function 调用完成，错误对象:", functionError, "数据:", data);
+
       // 如果 Edge Function 返回错误
       if (functionError) {
         throw functionError; // 抛出错误，由下面的 catch 块统一处理
       }
-
-      // Edge Function 成功执行后的处理
-      console.log('Edge Function "submit-comment" 调用成功:', data); // 日志：Edge Function 调用成功
+      
+      // 新增日志: Edge Function 调用成功后的数据 (如果需要更详细，可以保留此行)
+      // console.log("CommentForm.jsx - handleSubmit: Edge Function 调用成功，响应数据:", data); 
       setMessage("评论已成功发表！"); // 消息：评论成功发表
       setCommentText(''); // 清空文本域内容
-
+      
       // 如果父组件传递了 onCommentSubmitted 回调函数，则调用它
-      // 这通常用于通知父组件评论列表需要刷新
       if (onCommentSubmitted) {
-        onCommentSubmitted();
+        onCommentSubmitted(); 
       }
 
     } catch (err) {
-      // 处理调用 Edge Function 过程中发生的任何错误 (包括网络错误和 functionError)
-      console.error('调用 "submit-comment" Edge Function 时发生错误:', err.message); // 日志：Edge Function 调用错误
+      // 更新日志: 处理调用 Edge Function 时捕获到的异常
+      console.error("CommentForm.jsx - handleSubmit: 调用 Edge Function 'submit-comment' 时捕获到异常:", err);
       // 设置对用户友好的错误信息
-      setError(`发表评论失败: ${err.message || "未知错误，请稍后再试。"}`);
+      setError(`发表评论失败: ${err.message || "未知错误，请稍后再试。"}`); 
     } finally {
       setLoading(false); // 无论成功或失败，结束加载状态
     }
   };
 
-  // 定义表单容器的内联样式
-  const formStyle = {
-    border: '1px solid rgb(var(--gray-light))', padding: '20px', marginTop: '20px',
-    borderRadius: '8px', backgroundColor: 'rgb(var(--gray-light), 0.3)',
-    boxShadow: 'inset 0 1px 3px rgba(var(--black), 0.1)'
-  };
-  // 定义标题的内联样式
-  const headingStyle = {
-    marginTop: '0', marginBottom: '15px', color: 'rgb(var(--gray-dark))', fontSize: '1.25em'
-  };
-  // 定义文本域的内联样式
-  const textareaStyle = {
-    width: '100%', minHeight: '100px', padding: '10px', boxSizing: 'border-box',
-    borderRadius: '4px', border: '1px solid rgb(var(--gray))', fontSize: '1rem',
-    lineHeight: '1.5', fontFamily: 'inherit'
-  };
-  // 定义提交按钮的内联样式 (根据加载状态改变背景色和光标)
-  const buttonStyle = {
-    padding: '10px 20px', backgroundColor: loading ? 'var(--gray)' : 'var(--accent)',
-    color: 'white', border: 'none', borderRadius: '4px',
-    cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem',
-    fontWeight: '500', marginTop: '10px'
-  };
-  // 定义错误信息段落的样式
+  // --- 样式定义 (与之前版本或设计稿保持一致) ---
+  const formStyle = { border: '1px solid rgb(var(--gray-light))', padding: '20px', marginTop: '20px', borderRadius: '8px', backgroundColor: 'rgb(var(--gray-light), 0.3)', boxShadow: 'inset 0 1px 3px rgba(var(--black), 0.1)'};
+  const headingStyle = { marginTop: '0', marginBottom: '15px', color: 'rgb(var(--gray-dark))', fontSize: '1.25em'};
+  const textareaStyle = { width: '100%', minHeight: '100px', padding: '10px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid rgb(var(--gray))', fontSize: '1rem', lineHeight: '1.5', fontFamily: 'inherit'};
+  const buttonStyle = { padding: '10px 20px', backgroundColor: loading ? 'var(--gray)' : 'var(--accent)', color: 'white', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem', fontWeight: '500', marginTop: '10px'};
   const errorStyle = { color: 'red', marginBottom: '10px', textAlign: 'left' };
-  // 定义成功/提示信息段落的样式
   const messageStyle = { color: 'green', marginBottom: '10px', textAlign: 'left' };
 
-  // 定义UI文本 (中文)
+  // --- UI 文本 (中文) ---
   const formTitleText = "留下评论";
   const textareaPlaceholderText = "在这里写下您的评论...";
   const submitButtonText = "发表评论";
@@ -114,11 +96,20 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
   const loginToCommentText = "请登录后发表评论。"; // 用户未登录时的提示
   const loadingAuthText = "正在加载用户状态..."; // 认证状态加载中的提示
 
-  // 如果正在加载认证状态 (authIsLoading 来自 authStore)，则显示加载提示
+  // 新增日志: 检查 authIsLoading
+  console.log("CommentForm.jsx: 渲染前检查 authIsLoading:", authIsLoading);
+  // 如果正在加载认证状态 (authIsLoading 来自 authStore)，则显示加载提示 (同时显示标题)
   if (authIsLoading) {
-    return <div style={formStyle}><p>{loadingAuthText}</p></div>;
+    return (
+      <div style={formStyle}>
+        <h4 style={headingStyle}>{formTitleText}</h4>
+        <p>{loadingAuthText}</p>
+      </div>
+    );
   }
 
+  // 新增日志: 检查用户状态
+  console.log("CommentForm.jsx: 渲染前检查用户状态:", user ? user.email : '未登录');
   // 组件的 JSX 渲染输出
   return (
     // 表单容器 div
@@ -142,11 +133,11 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
             disabled={loading} // 评论提交过程中禁用文本域
           />
           {/* 提交按钮 */}
-          <button
-            type="submit"
+          <button 
+            type="submit" 
             style={buttonStyle}
             // 鼠标悬停和移开时的背景色变化效果 (仅在非加载状态下)
-            onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }}
+            onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }} 
             onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
             disabled={loading} // 评论提交过程中禁用按钮
           >

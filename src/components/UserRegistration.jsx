@@ -83,7 +83,7 @@ const UserRegistration = () => {
   };
   const errorStyle = { color: 'red', marginBottom: '15px', textAlign: 'center' }; // 错误信息样式
   const messageStyle = { color: 'green', marginBottom: '15px', textAlign: 'center' }; // 成功/提示信息样式
-
+  
   // 定义UI文本 (中文)
   const formTitleText = "用户注册";
   const usernameLabelText = "用户名";
@@ -112,10 +112,10 @@ const UserRegistration = () => {
           <label htmlFor="reg-password" style={labelStyle}>{passwordLabelText}</label>
           <input type="password" id="reg-password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} disabled={loading} />
         </div>
-        <button
-          type="submit"
+        <button 
+          type="submit" 
           style={buttonStyle}
-          onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }}
+          onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }} 
           onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
           disabled={loading} // 加载时禁用按钮
         >
