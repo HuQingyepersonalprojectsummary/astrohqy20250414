@@ -117,7 +117,7 @@ console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.
                     setRefreshKey(prevKey => prevKey + 1); // 更新 refreshKey (递增) 以触发刷新
                 }, []); // 空依赖数组意味着此回调函数在组件的生命周期内不会改变引用
                 
-                console.log("BlogPost.astro - CommentsApp: 正在渲染，postSlug:", postSlug, "refreshKey:", refreshKey); // 新增日志
+                console.log("BlogPost.astro - CommentsApp: 正在渲染，Props:", { postSlug: postSlug, refreshKey: refreshKey }); // 更新日志格式
 
                 // 渲染评论列表 (CommentList) 和评论表单 (CommentForm)
                 return (
