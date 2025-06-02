@@ -121,12 +121,12 @@ console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.
 
                 // 渲染评论列表 (CommentList) 和评论表单 (CommentForm)
                 return (
-                    <>
+                    <React.Fragment>
                         {/* CommentList 接收 postSlug (用于获取该文章的评论) 和 refreshKey (用于强制刷新) */}
                         <CommentList postSlug={postSlug} refreshKey={refreshKey} />
                         {/* CommentForm 接收 postSlug (用于提交评论时关联文章) 和 onCommentSubmitted 回调 */}
                         <CommentForm postSlug={postSlug} onCommentSubmitted={handleCommentSubmitted} />
-                    </>
+                    </React.Fragment>
                 );
             };
 
