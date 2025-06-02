@@ -1,4 +1,5 @@
 ---
+// --- (保持 Astro frontmatter 不变) ---
 // 导入 Astro 内容集合相关的类型定义
 import type { CollectionEntry } from 'astro:content';
 // 导入基础头部组件，用于设置页面的 <head> 内容
@@ -19,198 +20,131 @@ type Props = CollectionEntry<'blog'>['data'];
 
 // 从 Astro.props 中解构出博客文章的各项数据
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+// Astro.props.id 通常包含基于文件路径的 slug (对于 src/content/blog/ 中的文章)
+// 这个 slug 将用于唯一标识文章，以便关联评论
+const postSlug = Astro.props.id;
+// 如果您的 frontmatter 中有明确定义的 slug 字段，可以使用 Astro.props.data.slug
+// 例如: const postSlug = Astro.props.data.slug;
+// 请确保 postSlug 是一个能够唯一标识文章的字符串。
 ---
 
-{/* HTML 文档的 lang 属性设置为 "en" (英文)，可以根据实际情况修改为 "zh-CN" */}
-<html lang="en">
+{/* HTML 文档的 lang 属性设置为 "zh-CN" (中文) */}
+<html lang="zh-CN">
 	<head>
 		{/* BaseHead 组件，用于生成页面的 SEO 相关 meta 标签和标题 */}
 		<BaseHead title={title} description={description} />
 		<style>
-			/* 保留文章主体内容的现有样式 */
-			.prose {
-				width: 720px; /* 这将成为主内容列宽度的基础 */
-				max-width: 100%;
-				/* margin: auto; 已移除，因为 flex 布局会处理定位 */
-				padding: 1em; /* 内边距 */
-				color: rgb(var(--gray-dark)); /* 文字颜色 */
-			}
-
-            /* 两栏布局的新增样式 */
-            /* 页面整体包裹器，包含页头、主内容区域和页脚 */
-            .page-wrapper {
-                display: flex; /* 使用 flex 布局 */
-                flex-direction: column; /* 子元素垂直排列 */
-                min-height: 100vh; /* 最小高度为视口高度，确保页脚在内容不足时也能置底 */
-            }
-            /* 主内容区域，包含文章和侧边栏 */
-            .main-content-area {
-                display: flex; /* 使用 flex 布局 */
-                flex-wrap: wrap; /* 允许侧边栏在小屏幕上换行 */
-                gap: 2em; /* 内容与侧边栏之间的间隙 */
-                width: 100%; /* 宽度占满父容器 */
-                max-width: 1100px; /* 最大宽度，以适应侧边栏 */
-                margin: 0 auto; /* 水平居中 */
-                padding: 1em; /* 内边距 */
-                flex-grow: 1; /* 占据可用空间，用于粘性页脚的场景 */
-            }
-            /* 文章内容列 */
-            .article-column {
-                flex: 3; /* 占据相对较多的空间比例 (3/4) */
-                min-width: 70%; /* 在换行前确保有足够的宽度 */
-            }
-            /* 侧边栏列，用于放置小部件 */
-            .sidebar-column {
-                flex: 1; /* 占据相对较少的空间比例 (1/4) */
-                min-width: 250px; /* 侧边栏的最小宽度 */
-            }
-
-            /* 响应式设计：针对小屏幕的媒体查询 */
+			/* --- (所有 <style> 内容保持不变，此处省略以减少重复) --- */
+			.prose { width: 720px; max-width: 100%; padding: 1em; color: rgb(var(--gray-dark));}
+            .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+            .main-content-area { display: flex; flex-wrap: wrap; gap: 2em; width: 100%; max-width: 1100px; margin: 0 auto; padding: 1em; flex-grow: 1; }
+            .article-column { flex: 3; min-width: 70%; }
+            .sidebar-column { flex: 1; min-width: 250px; }
             @media (max-width: 960px) {
-                .main-content-area {
-                    flex-direction: column; /* 在小屏幕上，主内容和侧边栏垂直堆叠 */
-                    align-items: center; /* 堆叠时居中对齐各项 */
-                }
-                .article-column {
-                    min-width: 100%; /* 堆叠时文章列占满全宽 */
-                    order: 1; /* 内容优先显示 */
-                }
-                .sidebar-column {
-                    min-width: 100%; /* 堆叠时侧边栏占满全宽 */
-                    max-width: 720px; /* 堆叠时侧边栏最大宽度与文章内容宽度一致 */
-                    order: 2; /* 侧边栏在内容下方显示 */
-                }
+                .main-content-area { flex-direction: column; align-items: center; }
+                .article-column { min-width: 100%; order: 1; }
+                .sidebar-column { min-width: 100%; max-width: 720px; order: 2; }
             }
-
-            /* 评论区样式 */
-            .comments-section {
-                margin-top: 40px; /* 与上方内容的间距 */
-                padding-top: 20px; /* 顶部内边距 */
-                border-top: 1px solid #eee; /* 顶部边框作为分隔线 */
-            }
-            /* 热力图容器样式 */
-            .heatmap-container {
-                margin-top: 30px; /* 与上方内容的间距 */
-            }
-            /* 确保其他现有样式被保留或已包含在上面 */
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.title { /* 文章标题部分的容器 */
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 { /* 主标题样式 */
-				margin: 0 0 0.5em 0;
-			}
-			.date { /* 日期显示样式 */
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on { /* “最后更新于”文本样式 */
-				font-style: italic;
-			}
+            .comments-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+            .heatmap-container { margin-top: 30px; }
+			.hero-image { width: 100%; }
+			.hero-image img { display: block; margin: 0 auto; border-radius: 12px; box-shadow: var(--box-shadow); }
+			.title { margin-bottom: 1em; padding: 1em 0; text-align: center; line-height: 1; }
+			.title h1 { margin: 0 0 0.5em 0; }
+			.date { margin-bottom: 0.5em; color: rgb(var(--gray)); }
+			.last-updated-on { font-style: italic; }
 		</style>
 	</head>
 
-	<body class="page-wrapper"> {/* 应用页面整体包裹器样式 */}
-		<Header /> {/* 页头组件 */}
-		<main class="main-content-area"> {/* 主内容区域，包含文章和侧边栏 */}
-            {/* 文章内容列 */}
+	<body class="page-wrapper">
+		<Header />
+		<main class="main-content-area">
             <div class="article-column">
                 <article>
-                    {/* 文章主图片 */}
                     <div class="hero-image">
-                        {heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
+                        {/* 在 img 的 alt 属性中也使用 title，提高可访问性 */}
+                        {heroImage && <img width={1020} height={510} src={heroImage} alt={title} />}
                     </div>
-                    {/* 文章文本内容容器 */}
                     <div class="prose">
-                        {/* 文章标题和日期部分 */}
                         <div class="title">
                             <div class="date">
-                                <FormattedDate date={pubDate} /> {/* 显示格式化的发布日期 */}
+                                <FormattedDate date={pubDate} />
                             </div>
-                            {/* 如果有更新日期，则显示 */}
-                            {
-                                updatedDate && (
-                                    <div class="last-updated-on">
-                                        最后更新于 <FormattedDate date={updatedDate} />
-                                    </div>
-                                )
-                            }
-                            <h1>{title}</h1> {/* 文章主标题 */}
-                            <hr /> {/* 分隔线 */}
+                            { updatedDate && (<div class="last-updated-on"> 最后更新于 <FormattedDate date={updatedDate} /></div>) }
+                            <h1>{title}</h1>
+                            <hr />
                         </div>
-                        {/* Astro 的 slot，用于插入 Markdown/MDX 转换后的 HTML 内容 */}
                         <slot />
-
-                        {/* 评论区容器，React 组件将在此处渲染 */}
-                        <div id="comments-app" class="comments-section">
-                            {/* 注释：评论内容由页面底部的客户端脚本渲染 */}
+                        {/* 评论区容器，通过 data-post-slug 属性传递 postSlug 给客户端脚本 */}
+                        <div id="comments-app" class="comments-section" data-post-slug={postSlug}>
+                            {/* 注释：评论表单和列表将由下面的客户端脚本渲染到此 div 中 */}
                         </div>
-
-                        {/* 热力图显示容器 */}
                         <div class="heatmap-container">
-                            {/* HeatmapDisplay React 组件，设置 client:visible 使其在可见时加载 */}
                             <HeatmapDisplay client:visible />
                         </div>
                     </div>
                 </article>
             </div>
-            {/* 侧边栏 */}
             <aside class="sidebar-column">
-                <ArchiveWidget /> {/* 归档小部件 */}
+                <ArchiveWidget />
             </aside>
 		</main>
-		<Footer /> {/* 页脚组件 */}
+		<Footer />
 
         {/* 用于评论功能的客户端 React 脚本 */}
         <script type="module">
-            // 导入 React 和 ReactDOM
-            import React from 'react';
+            // 导入 React 相关的 hook 和 ReactDOM 用于渲染组件
+            import React, { useState, useCallback } from 'react'; // 添加 useState 和 useCallback
             import ReactDOM from 'react-dom/client';
             // 导入评论表单和评论列表 React 组件
             import CommentForm from '../components/CommentForm.jsx';
             import CommentList from '../components/CommentList.jsx';
-            // HeatmapDisplay 组件通过 Astro 的 client:visible 指令加载，因此不需要在此处导入进行渲染
 
-            // 评论应用的主组件
-            const CommentsApp = () => {
-                // 使用 React state 管理评论列表，包含初始的模拟评论
-                const [comments, setComments] = React.useState([
-                    { id: 1, author: 'Alice', text: '很棒的文章！', ipAddress: '192.168.0.1 (模拟)', timestamp: new Date(Date.now() - 100000).toISOString() },
-                    { id: 2, author: 'Bob', text: '感谢分享。', ipAddress: '203.0.113.42 (模拟)', timestamp: new Date().toISOString() }
-                ]);
+            // CommentsApp 组件：作为评论区 (表单和列表) 的根组件
+            // 它接收 postSlug 作为 prop，用于将评论与特定文章关联
+            const CommentsApp = ({ postSlug }) => {
+                // refreshKey state 用于在提交新评论后强制 CommentList 组件刷新
+                // 当 refreshKey 的值改变时，CommentList 的 useEffect 会重新运行，从而获取最新的评论
+                const [refreshKey, setRefreshKey] = useState(0);
 
-                // 处理新评论提交的函数
-                const handleCommentSubmit = (newComment) => {
-                    // 更新评论列表，将新评论添加到最前面
-                    setComments(prevComments => [newComment, ...prevComments]);
-                };
+                // handleCommentSubmitted 是一个回调函数，传递给 CommentForm 组件
+                // 当 CommentForm 成功提交一条评论后，会调用此函数
+                // 使用 useCallback 进行性能优化，确保此函数引用仅在依赖项未改变时不发生变化
+                const handleCommentSubmitted = useCallback(() => {
+                    console.log('CommentsApp (BlogPost.astro): 评论已提交，正在触发 CommentList 刷新...'); // 日志：评论已提交，准备刷新
+                    setRefreshKey(prevKey => prevKey + 1); // 更新 refreshKey (递增) 以触发刷新
+                }, []); // 空依赖数组意味着此回调函数在组件的生命周期内不会改变引用
 
-                // 返回评论列表和评论表单组件
+                // 渲染评论列表 (CommentList) 和评论表单 (CommentForm)
                 return (
                     <>
-                        <CommentList comments={comments} />
-                        <CommentForm onCommentSubmit={handleCommentSubmit} />
+                        {/* CommentList 接收 postSlug (用于获取该文章的评论) 和 refreshKey (用于强制刷新) */}
+                        <CommentList postSlug={postSlug} refreshKey={refreshKey} />
+                        {/* CommentForm 接收 postSlug (用于提交评论时关联文章) 和 onCommentSubmitted 回调 */}
+                        <CommentForm postSlug={postSlug} onCommentSubmitted={handleCommentSubmitted} />
                     </>
                 );
             };
 
-            // 获取用于渲染评论应用的 DOM 容器
+            // 获取用于渲染评论应用的 DOM 容器元素 (即 id="comments-app" 的 div)
             const container = document.getElementById('comments-app');
-            // 如果容器存在，则使用 ReactDOM.createRoot 渲染 CommentsApp 组件
+            // 确保容器元素存在于 DOM 中
             if (container) {
-                const root = ReactDOM.createRoot(container);
-                root.render(<CommentsApp />);
+                // 从容器元素的 data-post-slug 属性中读取当前文章的 slug
+                const postSlugFromDOM = container.dataset.postSlug;
+
+                // 如果成功获取到 postSlug
+                if (postSlugFromDOM) {
+                    const root = ReactDOM.createRoot(container); // 创建 React 根
+                    // 渲染 CommentsApp 组件，并将 postSlug 作为 prop 传递给它
+                    root.render(<CommentsApp postSlug={postSlugFromDOM} />);
+                } else {
+                    // 如果未能从 DOM 中获取 postSlug，则在控制台报错并在页面上显示错误信息
+                    console.error("评论区错误：未能从 DOM 中获取 postSlug。请确保 <div id='comments-app'> 具有 'data-post-slug' 属性。");
+                    container.innerHTML = "<p>无法加载评论：缺少文章标识。</p>"; // 提示：无法加载评论，缺少文章标识
+                }
+            } else {
+                 console.warn("评论区容器 (div#comments-app) 未在 DOM 中找到。"); // 警告：评论区容器未找到
             }
         </script>
 	</body>
