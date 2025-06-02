@@ -27,95 +27,14 @@
 -   **站点地图**: `@astrojs/sitemap` (根据初始配置隐式包含)
 -   **样式**: CSS (使用自定义属性 Custom Properties)
 
-## 🚀 本地运行
+## 详细开发与部署指南
 
-请按照以下说明在本地设置和运行项目，以便进行开发或测试。
+关于如何在本地运行此项目、了解详细的项目结构、如何添加新内容、以及如何部署项目（包括部署到 Vercel 的说明），请参阅我们的：
 
-### 环境要求
+➡️ **[开发与部署指南 (DEVELOPMENT.md)](./DEVELOPMENT.md)**
 
--   **Node.js**: 请确保已安装 Node.js。您可以从 [nodejs.org](https://nodejs.org/) 下载。Astro 通常在 LTS版本的 Node.js 上运行效果最佳。
--   **npm**: npm (Node Package Manager) 已随 Node.js 一同安装。
+本文档 (`DEVELOPMENT.md`) 包含了所有必要的详细技术信息，帮助您开始使用和进一步开发此项目。
 
-### 安装与设置
+---
 
-1.  **克隆代码仓库:**
-    ```bash
-    git clone <your-repository-url> # 请将 <your-repository-url> 替换为实际的仓库 URL
-    cd <repository-name>            # 请将 <repository-name> 替换为项目文件夹名称
-    ```
-
-2.  **安装依赖:**
-    此命令将下载并安装 `package.json` 文件中定义的所有必需软件包。
-    ```bash
-    npm install
-    ```
-
-### 运行开发服务器
-
-启动本地开发服务器：
-```bash
-npm run dev
-```
-通常，这会在 `http://localhost:4321` 启动服务器。控制台输出将确认访问地址。当您更改源文件时，服务器将自动重新加载。
-
-### 构建生产版本
-
-构建用于生产环境的静态站点：
-```bash
-npm run build
-```
-默认情况下，输出文件将放置在 `./dist/` 目录中。
-
-### 预览生产版本
-
-构建项目后，您可以在部署前在本地预览：
-```bash
-npm run preview
-```
-此命令将提供 `./dist/` 文件夹的内容。
-
-### 其他 Astro 命令
-
-您还可以通过 npm 使用其他 Astro CLI 命令：
-```bash
-npm run astro -- <command>
-```
-例如，运行 Astro 内置的诊断检查：
-```bash
-npm run astro check
-```
-获取 Astro CLI 的帮助信息：
-```bash
-npm run astro -- --help
-```
-
-## 项目结构
-
-您的 Astro 项目中包含以下文件夹和文件：
-
-```text
-├── public/              # 静态资源，如图片、字体等
-├── src/
-│   ├── components/      # Astro 和 React 组件
-│   ├── content/         # Markdown/MDX 内容集合 (例如博客文章)
-│   │   └── blog/
-│   ├── layouts/         # Astro 页面布局组件
-│   ├── pages/           # Astro 页面和动态路由
-│   │   └── blog/
-│   │       └── archive/ # 归档页面的动态路由
-│   │           ├── [year].astro
-│   │           └── [year]/
-│   │               └── [month].astro
-│   ├── styles/          # 全局 CSS 样式文件
-│   └── utils/           # 工具函数 (例如 archiveHelpers.ts)
-├── astro.config.mjs     # Astro 配置文件
-├── README.md            # 本文档
-├── package.json         # 项目依赖和脚本定义
-└── tsconfig.json        # TypeScript 配置文件
-```
-
-Astro 会在 `src/pages/` 目录中查找 `.astro`、`.md` 或 `.mdx` 文件。每个文件都会根据其文件名作为路由暴露。
-
-`src/content/` 目录包含相关的 Markdown 和 MDX 文档的“集合”。使用 `getCollection()` 从 `src/content/blog/` 检索文章，并可以使用可选的模式来类型检查您的 frontmatter。
-
-任何静态资源（如图片）都可以放置在 `public/` 目录中。
+希望您喜欢这个项目！

@@ -1,105 +1,101 @@
 ---
+// 获取当前日期，用于页脚的年份显示
 const today = new Date();
+// 定义页脚版权信息中的名字，可以替换为您自己的名字或站点名称
+const siteOwnerName = "博主名称或站点名称"; // Your name here -> 替换为中文
+const allRightsReservedText = "版权所有。"; // All rights reserved. -> 替换为中文
+
+// 定义社交/平台链接的sr-only（屏幕阅读器）文本和显示文本
+// 注意: Astro 的 SVG 图标组件 (astro-icon) 可能有其自身的本地化方式或不直接支持多语言 sr-only 文本。
+// 此处的 sr-only 文本主要针对普通 <a> 标签。
+const socialLinks = [
+    { platform: "Mastodon", srText: "在 Mastodon 上关注 Astro", href: "https://m.webtoo.ls/@astro", iconType: "svg" },
+    { platform: "Twitter", srText: "在 Twitter 上关注 Astro", href: "https://twitter.com/astrodotbuild", iconType: "svg" },
+    { platform: "GitHub", srText: "访问 Astro 的 GitHub 仓库", href: "https://github.com/withastro/astro", iconType: "svg" },
+    // 新增的平台链接 (占位符)
+    { platform: "Twitch", srText: "Twitch 频道", href: "#", iconType: "text", displayText: "Twitch" },
+    { platform: "YouTube", srText: "YouTube 频道", href: "#", iconType: "text", displayText: "YouTube" },
+    { platform: "Discord", srText: "Discord 服务器", href: "#", iconType: "text", displayText: "Discord" },
+    { platform: "Steam", srText: "Steam 个人资料", href: "#", iconType: "text", displayText: "Steam" }
+];
 ---
 
+{/* 页脚容器 */}
 <footer>
-	&copy; {today.getFullYear()} Your name here. All rights reserved.
+	{/* 版权信息，动态显示当前年份 */}
+	&copy; {today.getFullYear()} {siteOwnerName} {allRightsReservedText}
+	{/* 社交/平台链接容器 */}
 	<div class="social-links">
-		{/* Existing links */}
-		<a href="https://m.webtoo.ls/@astro" target="_blank">
-			<span class="sr-only">Follow Astro on Mastodon</span>
-			<svg
-				viewBox="0 0 16 16"
-				aria-hidden="true"
-				width="32"
-				height="32"
-				astro-icon="social/mastodon"
-				><path
-					fill="currentColor"
-					d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"
-				></path></svg
-			>
-		</a>
-		<a href="https://twitter.com/astrodotbuild" target="_blank">
-			<span class="sr-only">Follow Astro on Twitter</span>
-			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/twitter"
-				><path
-					fill="currentColor"
-					d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"
-				></path></svg
-			>
-		</a>
-		<a href="https://github.com/withastro/astro" target="_blank">
-			<span class="sr-only">Go to Astro's GitHub repo</span>
-			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/github"
-				><path
-					fill="currentColor"
-					d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-				></path></svg
-			>
-		</a>
-
-		{/* New Platform Links */}
-		<a href="#" target="_blank">
-			<span class="sr-only">Twitch</span>
-			{/* Placeholder for Twitch Icon */}
-			<span aria-hidden="true">Twitch</span>
-		</a>
-		<a href="#" target="_blank">
-			<span class="sr-only">YouTube</span>
-			{/* Placeholder for YouTube Icon */}
-			<span aria-hidden="true">YouTube</span>
-		</a>
-		<a href="#" target="_blank">
-			<span class="sr-only">Discord</span>
-			{/* Placeholder for Discord Icon */}
-			<span aria-hidden="true">Discord</span>
-		</a>
-		<a href="#" target="_blank">
-			<span class="sr-only">Steam</span>
-			{/* Placeholder for Steam Icon */}
-			<span aria-hidden="true">Steam</span>
-		</a>
+		{/* 遍历 socialLinks 数组来动态生成链接 */}
+        {socialLinks.map(link => (
+            <a href={link.href} target="_blank" title={link.platform}> {/* title 属性提供额外提示 */}
+                <span class="sr-only">{link.srText}</span>
+                {/* 根据 iconType 决定是显示 SVG 还是文本 */}
+                {link.iconType === "svg" && link.platform === "Mastodon" && (
+                    <svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/mastodon">
+                        <path fill="currentColor" d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"></path>
+                    </svg>
+                )}
+                {link.iconType === "svg" && link.platform === "Twitter" && (
+                     <svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/twitter">
+                        <path fill="currentColor" d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"></path>
+                    </svg>
+                )}
+                {link.iconType === "svg" && link.platform === "GitHub" && (
+                    <svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/github">
+                        <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                )}
+                {link.iconType === "text" && (
+                    <span aria-hidden="true">{link.displayText}</span>
+                )}
+            </a>
+        ))}
 	</div>
 </footer>
 <style>
+	/* 页脚整体样式 */
 	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
-		text-align: center;
+		padding: 2em 1em 6em 1em; /* 内边距 */
+		background: linear-gradient(var(--gray-gradient)) no-repeat; /* 背景渐变 */
+		color: rgb(var(--gray)); /* 文字颜色 */
+		text-align: center; /* 文本居中 */
 	}
+	/* 社交链接容器样式 */
 	.social-links {
-		display: flex;
-		justify-content: center;
-		align-items: center; /* Align items vertically for mixed content */
-		flex-wrap: wrap; /* Allow wrapping on smaller screens */
-		gap: 1.5em; /* Increased gap slightly for better spacing */
-		margin-top: 1em;
+		display: flex; /* 使用 flex 布局 */
+		justify-content: center; /* 水平居中对齐 */
+		align-items: center; /* 垂直居中对齐 (适用于混合内容) */
+		flex-wrap: wrap; /* 允许换行以适应小屏幕 */
+		gap: 1.5em; /* 链接之间的间隙 */
+		margin-top: 1em; /* 与上方版权信息的间距 */
 	}
+	/* 社交链接 (a 标签) 样式 */
 	.social-links a {
-		text-decoration: none;
-		color: rgb(var(--gray));
-		display: inline-flex; /* Helps align text and potential future icons */
-		align-items: center;
+		text-decoration: none; /* 去除下划线 */
+		color: rgb(var(--gray)); /* 默认链接颜色 */
+		display: inline-flex; /* 使图标和文本在同一行内对齐 */
+		align-items: center; /* 垂直居中对齐内部元素 */
 	}
+	/* 社交链接鼠标悬停效果 */
 	.social-links a:hover {
-		color: rgb(var(--gray-dark));
+		color: rgb(var(--gray-dark)); /* 鼠标悬停时链接颜色变深 */
 	}
-	.social-links svg { /* Ensure new text links don't affect SVG sizes if they differ */
+	/* SVG 图标样式 (确保文本链接不影响 SVG 大小) */
+	.social-links svg {
 		width: 32px;
 		height: 32px;
 	}
-    /* Style for text-based links to make them look similar to icon buttons */
+    /* 文本形式的链接样式 (使其外观与图标按钮相似) */
     .social-links a span[aria-hidden="true"] {
-        font-size: 0.9em; /* Adjust as needed */
-        padding: 0.2em 0.4em;
-        border: 1px solid transparent; /* For hover effect if desired */
+        font-size: 0.9em; /* 字体大小调整 */
+        padding: 0.2em 0.4em; /* 内边距 */
+        border: 1px solid transparent; /* 透明边框，用于可能的悬停效果 */
     }
+    /* 文本链接的鼠标悬停效果 (可选) */
     .social-links a:hover span[aria-hidden="true"] {
-        /* Optional: add a subtle background or border on hover for text links */
+        /* 例如: 可以为文本链接添加细微的背景或边框变化 */
         /* background-color: rgba(var(--gray-dark), 0.1); */
         /* border-radius: 4px; */
     }
-
 </style>
