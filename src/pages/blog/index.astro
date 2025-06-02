@@ -2,6 +2,7 @@
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import ArchiveWidget from '../../components/ArchiveWidget.astro'; // Import ArchiveWidget
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { getCollection } from 'astro:content';
 import FormattedDate from '../../components/FormattedDate.astro';
@@ -16,9 +17,7 @@ const posts = (await getCollection('blog')).sort(
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
-			main {
-				width: 960px;
-			}
+            /* Existing styles for ul, li, etc. */
 			ul {
 				display: flex;
 				flex-wrap: wrap;
@@ -34,7 +33,7 @@ const posts = (await getCollection('blog')).sort(
 				text-decoration: none;
 				transition: 0.2s ease;
 			}
-			ul li:first-child {
+			ul li:first-child { /* This style might need adjustment if the layout changes significantly */
 				width: 100%;
 				margin-bottom: 1rem;
 				text-align: center;
@@ -68,8 +67,48 @@ const posts = (await getCollection('blog')).sort(
 			ul a:hover img {
 				box-shadow: var(--box-shadow);
 			}
-			@media (max-width: 720px) {
-				ul {
+
+            /* New styles for two-column layout */
+            .page-wrapper {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+            .main-content-area { /* Contains main blog list and sidebar */
+                display: flex;
+                flex-wrap: wrap;
+                gap: 2em;
+                width: 100%;
+                max-width: 1280px; /* Wider max-width for blog index to accommodate sidebar + wider list */
+                margin: 0 auto;
+                padding: 1em; /* Padding for the overall content area */
+                flex-grow: 1;
+            }
+            .blog-list-column { /* Main blog listing */
+                flex: 3;
+                min-width: 70%;
+                /* The 'main' tag's original width of 960px is now handled by this column's flex properties */
+            }
+            .sidebar-column { /* Sidebar for widgets */
+                flex: 1;
+                min-width: 250px;
+            }
+
+			@media (max-width: 960px) { /* Breakpoint for stacking */
+                .main-content-area {
+                    flex-direction: column;
+                    align-items: center;
+                }
+                .blog-list-column {
+                    min-width: 100%;
+                    order: 1;
+                }
+                .sidebar-column {
+                    min-width: 100%;
+                    max-width: 720px; /* Match content width when stacked */
+                    order: 2;
+                }
+				ul { /* Adjustments for stacked view if needed */
 					gap: 0.5em;
 				}
 				ul li {
@@ -85,26 +124,31 @@ const posts = (await getCollection('blog')).sort(
 			}
 		</style>
 	</head>
-	<body>
+	<body class="page-wrapper">
 		<Header />
-		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt="" />
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
+		<main class="main-content-area"> {/* Replaced main tag with div and class, or wrap main tag */}
+            <div class="blog-list-column">
+                <section> {/* Existing section with blog posts */}
+                    <ul>
+                        {
+                            posts.map((post) => (
+                                <li>
+                                    <a href={`/blog/${post.id}/`}>
+                                        <img width={720} height={360} src={post.data.heroImage} alt="" />
+                                        <h4 class="title">{post.data.title}</h4>
+                                        <p class="date">
+                                            <FormattedDate date={post.data.pubDate} />
+                                        </p>
+                                    </a>
+                                </li>
+                            ))
+                        }
+                    </ul>
+                </section>
+            </div>
+            <aside class="sidebar-column">
+                <ArchiveWidget />
+            </aside>
 		</main>
 		<Footer />
 	</body>

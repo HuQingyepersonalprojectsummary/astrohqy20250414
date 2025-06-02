@@ -1,0 +1,100 @@
+---
+import { getArchiveData, type YearData } from '../utils/archiveHelpers';
+
+const archiveData: YearData[] = await getArchiveData();
+---
+
+<div class="archive-widget">
+  <h3 class="widget-title">Blog Archives</h3>
+  {archiveData && archiveData.length > 0 ? (
+    <ul class="year-list">
+      {archiveData.map(yearData => (
+        <li class="year-item">
+          <a href={`/blog/archive/${yearData.year}`} class="year-link">{yearData.year}</a>
+          {/* Placeholder link, actual archive page to be created later */}
+          {yearData.months && yearData.months.length > 0 && (
+            <ul class="month-list">
+              {yearData.months.map(monthData => (
+                <li class="month-item">
+                  <a href={`/blog/archive/${yearData.year}/${String(monthData.monthNumber).padStart(2, '0')}`} class="month-link">
+                    {monthData.monthName}
+                  </a>
+                  {/* Placeholder link, actual archive page to be created later */}
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No archives available.</p>
+  )}
+</div>
+
+<style>
+  .archive-widget {
+    padding: 1.5em;
+    background-color: rgba(var(--gray-light), 0.3); /* Similar to CommentForm bg */
+    border: 1px solid rgb(var(--gray-light));
+    border-radius: 8px;
+    margin-bottom: 2em;
+  }
+
+  .widget-title {
+    font-size: 1.25em; /* h5 equivalent */
+    color: rgb(var(--black));
+    margin-top: 0;
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid rgb(var(--gray-light));
+  }
+
+  .year-list, .month-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .year-list {
+    /* Styles specific to the year list if any */
+  }
+
+  .year-item {
+    margin-bottom: 0.75em;
+  }
+
+  .year-link {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--accent-dark); /* Or var(--accent) */
+    text-decoration: none;
+  }
+  .year-link:hover {
+    text-decoration: underline;
+  }
+
+  .month-list {
+    padding-left: 1em; /* Indent months under year */
+    margin-top: 0.5em;
+  }
+
+  .month-item {
+    margin-bottom: 0.3em;
+  }
+
+  .month-link {
+    font-size: 0.95em;
+    color: rgb(var(--gray-dark));
+    text-decoration: none;
+  }
+  .month-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .archive-widget p {
+    font-style: italic;
+    color: rgb(var(--gray));
+  }
+</style>

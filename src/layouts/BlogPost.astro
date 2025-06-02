@@ -4,11 +4,8 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
-
-// Import React components
-// import CommentForm from '../components/CommentForm.jsx'; // Already imported
-// import CommentList from '../components/CommentList.jsx'; // Already imported
-import HeatmapDisplay from '../components/HeatmapDisplay.jsx'; // New import
+import HeatmapDisplay from '../components/HeatmapDisplay.jsx';
+import ArchiveWidget from '../components/ArchiveWidget.astro'; // Import ArchiveWidget
 
 type Props = CollectionEntry<'blog'>['data'];
 
@@ -20,10 +17,59 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 		<BaseHead title={title} description={description} />
 		<style>
 			/* ... existing styles ... */
-			main {
-				width: calc(100% - 2em);
+			.prose { /* Keep existing prose styles for the main content column */
+				width: 720px; /* This will become the basis for main column width */
 				max-width: 100%;
-				margin: 0;
+				/* margin: auto; Remove auto margin as flex will handle positioning */
+				padding: 1em;
+				color: rgb(var(--gray-dark));
+			}
+            /* New styles for two-column layout */
+            .page-wrapper { /* Wraps header, main content area, and footer */
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+            .main-content-area { /* Contains main article and sidebar */
+                display: flex;
+                flex-wrap: wrap; /* Allow sidebar to wrap on smaller screens */
+                gap: 2em; /* Space between content and sidebar */
+                width: 100%;
+                max-width: 1100px; /* Adjust max-width to accommodate sidebar */
+                margin: 0 auto; /* Center the content area */
+                padding: 1em; /* Padding for the overall content area */
+                flex-grow: 1; /* Ensure it takes available space if footer is sticky */
+            }
+            .article-column { /* Main blog post content */
+                flex: 3; /* Takes up more space */
+                min-width: 70%; /* Ensure it has enough width before wrapping */
+            }
+            .sidebar-column { /* Sidebar for widgets */
+                flex: 1;
+                min-width: 250px; /* Minimum width for sidebar */
+            }
+
+            @media (max-width: 960px) { /* Breakpoint for stacking */
+                .main-content-area {
+                    flex-direction: column;
+                    align-items: center; /* Center items when stacked */
+                }
+                .article-column {
+                    min-width: 100%; /* Full width when stacked */
+                    order: 1; /* Content first */
+                }
+                .sidebar-column {
+                    min-width: 100%; /* Full width for sidebar when stacked */
+                    max-width: 720px; /* Match prose width when stacked */
+                    order: 2; /* Sidebar second */
+                }
+            }
+            /* ... other existing styles ... */
+            /* Ensure existing styles from original file are maintained or adapted */
+			main { /* This was the original main tag, ensure its styles are covered or removed if redundant */
+				/* width: calc(100% - 2em); /* Likely redundant now */
+				/* max-width: 100%; */ /* Likely redundant now */
+				/* margin: 0; */ /* Likely redundant now */
 			}
 			.hero-image {
 				width: 100%;
@@ -33,13 +79,6 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 				margin: 0 auto;
 				border-radius: 12px;
 				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
 			}
 			.title {
 				margin-bottom: 1em;
@@ -62,67 +101,67 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
                 padding-top: 20px;
                 border-top: 1px solid #eee;
             }
-            /* Style for the container of HeatmapDisplay if needed */
             .heatmap-container {
                 margin-top: 30px;
             }
 		</style>
 	</head>
 
-	<body>
+	<body class="page-wrapper"> {/* Added page-wrapper class */}
 		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
-					</div>
-					<slot /> {/* Blog post content renders here */}
-
-                    <div id="comments-app" class="comments-section">
-                        {/* Comments rendered by script */}
+		<main class="main-content-area"> {/* Renamed from main to main-content-area and applied flex */ }
+            <div class="article-column"> {/* Added wrapper for article content */}
+                <article>
+                    <div class="hero-image">
+                        {heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
                     </div>
+                    <div class="prose"> {/* Prose is now inside article-column */}
+                        <div class="title">
+                            <div class="date">
+                                <FormattedDate date={pubDate} />
+                                {
+                                    updatedDate && (
+                                        <div class="last-updated-on">
+                                            Last updated on <FormattedDate date={updatedDate} />
+                                        </div>
+                                    )
+                                }
+                            </div>
+                            <h1>{title}</h1>
+                            <hr />
+                        </div>
+                        <slot /> {/* Blog post content renders here */}
 
-                    {/* Heatmap Display - Needs client directive for React component */}
-                    <div class="heatmap-container">
-                        <HeatmapDisplay client:visible />
+                        <div id="comments-app" class="comments-section">
+                            {/* Comments rendered by script */}
+                        </div>
+
+                        <div class="heatmap-container">
+                            <HeatmapDisplay client:visible />
+                        </div>
                     </div>
-				</div>
-			</article>
+                </article>
+            </div>
+            <aside class="sidebar-column"> {/* Sidebar column */}
+                <ArchiveWidget />
+            </aside>
 		</main>
 		<Footer />
-
+        {/* ... existing script ... */}
         <script type="module">
             import React from 'react';
             import ReactDOM from 'react-dom/client';
             import CommentForm from '../components/CommentForm.jsx';
             import CommentList from '../components/CommentList.jsx';
-            // HeatmapDisplay is now rendered via Astro directive, so no need to import here for ReactDOM.render
 
             const CommentsApp = () => {
                 const [comments, setComments] = React.useState([
                     { id: 1, author: 'Alice', text: 'Great post!', ipAddress: '192.168.0.1 (Mock)', timestamp: new Date(Date.now() - 100000).toISOString() },
                     { id: 2, author: 'Bob', text: 'Thanks for sharing.', ipAddress: '203.0.113.42 (Mock)', timestamp: new Date().toISOString() }
                 ]);
-
                 const handleCommentSubmit = (newComment) => {
                     setComments(prevComments => [newComment, ...prevComments]);
                 };
-
                 return (
                     <>
                         <CommentList comments={comments} />
@@ -130,7 +169,6 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
                     </>
                 );
             };
-
             const container = document.getElementById('comments-app');
             if (container) {
                 const root = ReactDOM.createRoot(container);

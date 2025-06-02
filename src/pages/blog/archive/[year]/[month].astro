@@ -1,0 +1,104 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseHead from '../../../../components/BaseHead.astro';
+import Header from '../../../../components/Header.astro';
+import Footer from '../../../../components/Footer.astro';
+import FormattedDate from '../../../../components/FormattedDate.astro';
+import ArchiveWidget from '../../../../components/ArchiveWidget.astro'; // For the sidebar
+import { SITE_TITLE } from '../../../../consts';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  const paths = new Set<string>(); // Using string to store "year/month"
+  posts.forEach(post => {
+    if (post.data.pubDate instanceof Date && !isNaN(post.data.pubDate.valueOf())) {
+      const year = post.data.pubDate.getUTCFullYear().toString();
+      const month = (post.data.pubDate.getUTCMonth() + 1).toString().padStart(2, '0');
+      paths.add(`${year}/${month}`);
+    }
+  });
+  return Array.from(paths).map(path => {
+    const [year, month] = path.split('/');
+    return { params: { year, month } };
+  });
+}
+
+const { year, month } = Astro.params;
+const monthNumber = parseInt(month, 10);
+
+const allPosts = await getCollection('blog');
+const postsForMonth = allPosts.filter(post => {
+  if (!(post.data.pubDate instanceof Date) || isNaN(post.data.pubDate.valueOf())) return false;
+  return post.data.pubDate.getUTCFullYear().toString() === year &&
+         (post.data.pubDate.getUTCMonth() + 1) === monthNumber;
+}).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const monthName = monthNames[monthNumber - 1];
+
+const pageTitle = `Posts from ${monthName} ${year} | ${SITE_TITLE}`;
+const pageDescription = `Blog posts published in ${monthName} ${year}.`;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+    <BaseHead title={pageTitle} description={pageDescription} />
+    <style>
+        /* Re-using styles from [year].astro and blog/index.astro */
+        ul { display: flex; flex-wrap: wrap; gap: 2rem; list-style-type: none; margin: 0; padding: 0; }
+        ul li { width: calc(50% - 1rem); }
+        ul li * { text-decoration: none; transition: 0.2s ease; }
+        ul li img { margin-bottom: 0.5rem; border-radius: 12px; }
+        ul li a { display: block; }
+        .title { margin: 0; color: rgb(var(--black)); line-height: 1; }
+        .date { margin: 0; color: rgb(var(--gray)); }
+        ul li a:hover h4, ul li a:hover .date { color: rgb(var(--accent)); }
+        ul a:hover img { box-shadow: var(--box-shadow); }
+
+        .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+        .main-content-area { display: flex; flex-wrap: wrap; gap: 2em; width: 100%; max-width: 1280px; margin: 0 auto; padding: 1em; flex-grow: 1; }
+        .blog-list-column { flex: 3; min-width: 70%; }
+        .sidebar-column { flex: 1; min-width: 250px; }
+        .archive-title { font-size: 2em; margin-bottom: 1em; color: rgb(var(--black)); }
+
+        @media (max-width: 960px) {
+            .main-content-area { flex-direction: column; align-items: center; }
+            .blog-list-column { min-width: 100%; order: 1; }
+            .sidebar-column { min-width: 100%; max-width: 720px; order: 2; }
+            ul li { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body class="page-wrapper">
+    <Header />
+    <main class="main-content-area">
+        <div class="blog-list-column">
+            <section>
+                <h1 class="archive-title">Posts from {monthName} {year}</h1>
+                {postsForMonth.length > 0 ? (
+                    <ul>
+                        {postsForMonth.map(post => (
+                            <li>
+                                <a href={`/blog/${post.id}/`}>
+                                    <img width={720} height={360} src={post.data.heroImage} alt="" />
+                                    <h4 class="title">{post.data.title}</h4>
+                                    <p class="date">
+                                        <FormattedDate date={post.data.pubDate} />
+                                    </p>
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No posts found for {monthName} {year}.</p>
+                )}
+            </section>
+        </div>
+        <aside class="sidebar-column">
+            <ArchiveWidget />
+        </aside>
+    </main>
+    <Footer />
+</body>
+</html>

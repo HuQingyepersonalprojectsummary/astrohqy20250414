@@ -1,0 +1,123 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseHead from '../../../components/BaseHead.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import FormattedDate from '../../../components/FormattedDate.astro';
+import ArchiveWidget from '../../../components/ArchiveWidget.astro'; // For the sidebar
+import { SITE_TITLE } from '../../../consts';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  const years = new Set<string>();
+  posts.forEach(post => {
+    if (post.data.pubDate instanceof Date && !isNaN(post.data.pubDate.valueOf())) {
+      years.add(post.data.pubDate.getUTCFullYear().toString());
+    }
+  });
+  return Array.from(years).map(year => ({ params: { year } }));
+}
+
+const { year } = Astro.params;
+
+const allPosts = await getCollection('blog');
+const postsForYear = allPosts.filter(post => {
+  if (!(post.data.pubDate instanceof Date) || isNaN(post.data.pubDate.valueOf())) return false;
+  return post.data.pubDate.getUTCFullYear().toString() === year;
+}).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const pageTitle = `Posts from ${year} | ${SITE_TITLE}`;
+const pageDescription = `Blog posts published in the year ${year}.`;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+    <BaseHead title={pageTitle} description={pageDescription} />
+    <style>
+        /* Re-using styles from blog/index.astro and adapting for sidebar layout */
+        ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        ul li {
+            width: calc(50% - 1rem); /* Adjust if needed, or go full width if fewer items */
+        }
+        ul li * {
+            text-decoration: none;
+            transition: 0.2s ease;
+        }
+        ul li img {
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+        }
+        ul li a {
+            display: block;
+        }
+        .title {
+            margin: 0;
+            color: rgb(var(--black));
+            line-height: 1;
+        }
+        .date {
+            margin: 0;
+            color: rgb(var(--gray));
+        }
+        ul li a:hover h4,
+        ul li a:hover .date {
+            color: rgb(var(--accent));
+        }
+        ul a:hover img {
+            box-shadow: var(--box-shadow);
+        }
+
+        .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+        .main-content-area { display: flex; flex-wrap: wrap; gap: 2em; width: 100%; max-width: 1280px; margin: 0 auto; padding: 1em; flex-grow: 1; }
+        .blog-list-column { flex: 3; min-width: 70%; }
+        .sidebar-column { flex: 1; min-width: 250px; }
+        .archive-title { font-size: 2em; margin-bottom: 1em; color: rgb(var(--black)); }
+
+        @media (max-width: 960px) {
+            .main-content-area { flex-direction: column; align-items: center; }
+            .blog-list-column { min-width: 100%; order: 1; }
+            .sidebar-column { min-width: 100%; max-width: 720px; order: 2; }
+            ul li { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body class="page-wrapper">
+    <Header />
+    <main class="main-content-area">
+        <div class="blog-list-column">
+            <section>
+                <h1 class="archive-title">Posts from {year}</h1>
+                {postsForYear.length > 0 ? (
+                    <ul>
+                        {postsForYear.map(post => (
+                            <li>
+                                <a href={`/blog/${post.id}/`}>
+                                    <img width={720} height={360} src={post.data.heroImage} alt="" />
+                                    <h4 class="title">{post.data.title}</h4>
+                                    <p class="date">
+                                        <FormattedDate date={post.data.pubDate} />
+                                    </p>
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No posts found for {year}.</p>
+                )}
+            </section>
+        </div>
+        <aside class="sidebar-column">
+            <ArchiveWidget />
+        </aside>
+    </main>
+    <Footer />
+</body>
+</html>

@@ -5,6 +5,7 @@ const today = new Date();
 <footer>
 	&copy; {today.getFullYear()} Your name here. All rights reserved.
 	<div class="social-links">
+		{/* Existing links */}
 		<a href="https://m.webtoo.ls/@astro" target="_blank">
 			<span class="sr-only">Follow Astro on Mastodon</span>
 			<svg
@@ -37,6 +38,28 @@ const today = new Date();
 				></path></svg
 			>
 		</a>
+
+		{/* New Platform Links */}
+		<a href="#" target="_blank">
+			<span class="sr-only">Twitch</span>
+			{/* Placeholder for Twitch Icon */}
+			<span aria-hidden="true">Twitch</span>
+		</a>
+		<a href="#" target="_blank">
+			<span class="sr-only">YouTube</span>
+			{/* Placeholder for YouTube Icon */}
+			<span aria-hidden="true">YouTube</span>
+		</a>
+		<a href="#" target="_blank">
+			<span class="sr-only">Discord</span>
+			{/* Placeholder for Discord Icon */}
+			<span aria-hidden="true">Discord</span>
+		</a>
+		<a href="#" target="_blank">
+			<span class="sr-only">Steam</span>
+			{/* Placeholder for Steam Icon */}
+			<span aria-hidden="true">Steam</span>
+		</a>
 	</div>
 </footer>
 <style>
@@ -49,14 +72,34 @@ const today = new Date();
 	.social-links {
 		display: flex;
 		justify-content: center;
-		gap: 1em;
+		align-items: center; /* Align items vertically for mixed content */
+		flex-wrap: wrap; /* Allow wrapping on smaller screens */
+		gap: 1.5em; /* Increased gap slightly for better spacing */
 		margin-top: 1em;
 	}
 	.social-links a {
 		text-decoration: none;
 		color: rgb(var(--gray));
+		display: inline-flex; /* Helps align text and potential future icons */
+		align-items: center;
 	}
 	.social-links a:hover {
 		color: rgb(var(--gray-dark));
 	}
+	.social-links svg { /* Ensure new text links don't affect SVG sizes if they differ */
+		width: 32px;
+		height: 32px;
+	}
+    /* Style for text-based links to make them look similar to icon buttons */
+    .social-links a span[aria-hidden="true"] {
+        font-size: 0.9em; /* Adjust as needed */
+        padding: 0.2em 0.4em;
+        border: 1px solid transparent; /* For hover effect if desired */
+    }
+    .social-links a:hover span[aria-hidden="true"] {
+        /* Optional: add a subtle background or border on hover for text links */
+        /* background-color: rgba(var(--gray-dark), 0.1); */
+        /* border-radius: 4px; */
+    }
+
 </style>
