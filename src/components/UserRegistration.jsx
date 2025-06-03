@@ -29,7 +29,9 @@ const UserRegistration = () => {
       options: {
         data: {
           username: username, // 将 username 存储在 user_metadata 中
-        }
+        },
+        // 设置邮箱确认后的重定向URL
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     });
 

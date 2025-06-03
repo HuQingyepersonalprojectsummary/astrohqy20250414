@@ -1,0 +1,112 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE } from '../../consts';
+
+const pageTitle = `认证处理中 | ${SITE_TITLE}`;
+const pageDescription = '正在处理您的认证信息...';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <BaseHead title={pageTitle} description={pageDescription} />
+</head>
+<body>
+    <Header />
+    <main style="padding: 2rem; max-width: 600px; margin: 0 auto; text-align: center;">
+        <h1>认证处理中...</h1>
+        <div id="auth-status">
+            <p>正在验证您的认证信息，请稍候...</p>
+        </div>
+        <div id="loading-spinner" style="margin: 20px 0;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #2337ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
+        </div>
+    </main>
+    <Footer />
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script>
+        import { supabase } from '@/lib/supabaseClient';
+
+        async function handleAuthCallback() {
+            const statusDiv = document.getElementById('auth-status');
+            const loadingSpinner = document.getElementById('loading-spinner');
+
+            try {
+                // 获取URL中的哈希参数
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const accessToken = hashParams.get('access_token');
+                const refreshToken = hashParams.get('refresh_token');
+                const tokenType = hashParams.get('token_type');
+                const type = hashParams.get('type');
+
+                console.log('Auth callback - URL参数:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+
+                if (accessToken && refreshToken) {
+                    // 设置会话
+                    const { data, error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    });
+
+                    if (error) {
+                        console.error('设置会话失败:', error);
+                        statusDiv.innerHTML = `
+                            <p style="color: red;">认证失败: ${error.message}</p>
+                            <p><a href="/login">返回登录页面</a></p>
+                        `;
+                        loadingSpinner.style.display = 'none';
+                        return;
+                    }
+
+                    console.log('会话设置成功:', data);
+
+                    if (type === 'signup') {
+                        statusDiv.innerHTML = `
+                            <p style="color: green;">✅ 注册成功！欢迎加入！</p>
+                            <p>正在跳转到首页...</p>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <p style="color: green;">✅ 登录成功！</p>
+                            <p>正在跳转到首页...</p>
+                        `;
+                    }
+
+                    // 等待2秒后跳转到首页
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+
+                } else {
+                    // 没有找到认证参数，可能是直接访问此页面
+                    statusDiv.innerHTML = `
+                        <p style="color: orange;">未找到认证信息</p>
+                        <p><a href="/login">前往登录页面</a></p>
+                    `;
+                    loadingSpinner.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('处理认证回调时发生错误:', error);
+                statusDiv.innerHTML = `
+                    <p style="color: red;">处理认证信息时发生错误</p>
+                    <p><a href="/login">返回登录页面</a></p>
+                `;
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // 页面加载完成后处理认证回调
+        document.addEventListener('DOMContentLoaded', handleAuthCallback);
+    </script>
+</body>
+</html>

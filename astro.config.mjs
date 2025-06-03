@@ -18,7 +18,7 @@ export default defineConfig({
 	// site: 属性用于设置站点的最终部署 URL。这对于生成站点地图和 RSS源中的绝对链接非常重要。
 	// 例如: 'https://www.yourdomain.com'
 	// 当前为占位符，请在实际部署时替换为您的真实域名。
-	site: 'https://example.com', // 示例域名，部署前请务必修改
+	site: 'https://astrohqy20250414.vercel.app', // Vercel部署域名
 
 	// integrations: 数组用于配置 Astro 项目所使用的各种集成插件。
 	// 集成可以扩展 Astro 的功能，例如添加对不同 UI 框架的支持、生成站点地图等。
