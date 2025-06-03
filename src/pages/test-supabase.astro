@@ -23,6 +23,17 @@ const pageDescription = '测试Supabase连接状态';
         <button id="test-connection" style="padding: 10px 20px; margin: 10px 0; background: #2337ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
             重新测试连接
         </button>
+
+        <!-- 注册测试区域 -->
+        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px;">
+            <h2>注册功能测试</h2>
+            <p>测试注册API（不会实际创建用户）</p>
+            <button id="test-register" style="padding: 10px 20px; margin: 10px 0; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                测试注册API
+            </button>
+            <div id="register-results" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;"></div>
+        </div>
+
         <div id="test-details" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px; font-family: monospace; white-space: pre-wrap;"></div>
     </main>
     <Footer />
@@ -111,11 +122,70 @@ const pageDescription = '测试Supabase连接状态';
             detailsDiv.innerHTML = tests.join('\n');
         }
 
+        // 测试注册功能
+        async function testRegistration() {
+            const resultsDiv = document.getElementById('register-results');
+            resultsDiv.innerHTML = '<p>正在测试注册API...</p>';
+
+            try {
+                // 使用一个明显的测试邮箱，不会实际注册
+                const testEmail = 'test-' + Date.now() + '@example.com';
+                const testPassword = 'TestPassword123!';
+                const testUsername = 'testuser' + Date.now();
+
+                console.log('开始测试注册API，使用测试数据:', {
+                    email: testEmail,
+                    username: testUsername
+                });
+
+                // 尝试调用注册API
+                const { data, error } = await supabase.auth.signUp({
+                    email: testEmail,
+                    password: testPassword,
+                    options: {
+                        data: {
+                            username: testUsername
+                        },
+                        emailRedirectTo: `${window.location.origin}/auth/callback`
+                    }
+                });
+
+                console.log('注册API响应:', { data, error });
+
+                if (error) {
+                    resultsDiv.innerHTML = `
+                        <p style="color: red;"><strong>❌ 注册API测试失败:</strong></p>
+                        <p>错误: ${error.message}</p>
+                        <p>代码: ${error.code || 'N/A'}</p>
+                        <p>详情: ${error.details || 'N/A'}</p>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <p style="color: green;"><strong>✅ 注册API测试成功!</strong></p>
+                        <p>用户ID: ${data.user?.id || 'N/A'}</p>
+                        <p>邮箱: ${data.user?.email || 'N/A'}</p>
+                        <p>确认状态: ${data.user?.email_confirmed_at ? '已确认' : '待确认'}</p>
+                        <p style="color: orange;">注意: 这是测试用户，请不要使用真实邮箱。</p>
+                    `;
+                }
+
+            } catch (err) {
+                console.error('注册测试异常:', err);
+                resultsDiv.innerHTML = `
+                    <p style="color: red;"><strong>❌ 注册测试异常:</strong></p>
+                    <p>${err.message}</p>
+                `;
+            }
+        }
+
         // 页面加载时自动测试
         document.addEventListener('DOMContentLoaded', testSupabaseConnection);
-        
+
         // 按钮点击时重新测试
         document.getElementById('test-connection').addEventListener('click', testSupabaseConnection);
+
+        // 注册测试按钮
+        document.getElementById('test-register').addEventListener('click', testRegistration);
     </script>
 </body>
 </html>

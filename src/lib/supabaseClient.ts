@@ -9,14 +9,27 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
+// 调试信息
+console.log('Supabase 客户端初始化:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  url: supabaseUrl,
+  keyLength: supabaseAnonKey?.length,
+  env: import.meta.env.MODE
+});
+
 // 类型和存在性检查：确保环境变量已正确设置
 // 如果 Supabase URL 未定义，则抛出错误，因为客户端无法在没有 URL 的情况下初始化
 if (!supabaseUrl) {
-  throw new Error("Supabase URL (PUBLIC_SUPABASE_URL) 未在环境变量中定义。");
+  const error = "Supabase URL (PUBLIC_SUPABASE_URL) 未在环境变量中定义。";
+  console.error(error);
+  throw new Error(error);
 }
 // 如果 Supabase 匿名密钥未定义，则抛出错误
 if (!supabaseAnonKey) {
-  throw new Error("Supabase Anon Key (PUBLIC_SUPABASE_ANON_KEY) 未在环境变量中定义。");
+  const error = "Supabase Anon Key (PUBLIC_SUPABASE_ANON_KEY) 未在环境变量中定义。";
+  console.error(error);
+  throw new Error(error);
 }
 
 // 创建并导出 Supabase 客户端实例

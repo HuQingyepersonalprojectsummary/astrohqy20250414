@@ -19,6 +19,20 @@ const UserRegistration = () => {
     setError('');       // 清空之前的错误信息
     setMessage('');     // 清空之前的消息
 
+    // 检查环境变量
+    console.log('UserRegistration - 环境变量检查:', {
+      supabaseUrl: import.meta.env.PUBLIC_SUPABASE_URL,
+      hasAnonKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+      anonKeyLength: import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.length
+    });
+
+    // 验证 Supabase 配置
+    if (!import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_ANON_KEY) {
+      setError('Supabase 配置错误：缺少必要的环境变量');
+      setLoading(false);
+      return;
+    }
+
     // 调用 Supabase Auth 的 signUp 方法进行用户注册
     // 我们将 username 存储在 user_metadata 中。
     // 之后需要设置一个 Supabase 数据库触发器，在 auth.users 表插入新用户时，
@@ -37,10 +51,26 @@ const UserRegistration = () => {
 
     setLoading(false); // 结束加载状态
 
+    // 详细日志记录
+    console.log('UserRegistration - 注册响应详情:', {
+      data: data,
+      error: signUpError,
+      user: data?.user,
+      session: data?.session,
+      userMetadata: data?.user?.user_metadata,
+      rawUserMetadata: data?.user?.raw_user_meta_data
+    });
+
     if (signUpError) {
       // 如果注册过程中发生错误，则设置错误信息
-      console.error('Supabase 注册错误:', signUpError.message); // 在控制台记录详细错误
-      setError(signUpError.message); // 将错误信息展示给用户
+      console.error('UserRegistration - Supabase 注册错误:', {
+        error: signUpError,
+        message: signUpError.message,
+        details: signUpError.details,
+        hint: signUpError.hint,
+        code: signUpError.code
+      });
+      setError(`注册失败: ${signUpError.message}`); // 将错误信息展示给用户
     } else if (data.user) {
       // 根据 Supabase Auth 的默认行为，新用户注册后需要邮箱验证
       // data.user.identities 通常会指示用户是否已确认邮箱 (is_confirmed_at)
