@@ -44,38 +44,42 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
     setMessage('');     // 清空之前的消息
 
     try {
-      // 详细日志：开始调用 Edge Function
-      console.log("CommentForm.jsx - 开始调用 Edge Function:", {
+      // 详细日志：开始插入评论 (直接数据库方式)
+      console.log("CommentForm.jsx - 开始插入评论 (直接数据库):", {
         postSlug,
         userId: user.id,
         userEmail: user.email,
         contentLength: commentText.trim().length
       });
 
-      // 调用 Supabase Edge Function 'submit-comment' 来提交评论
-      // 这个 Edge Function 会处理评论的插入、用户身份验证、IP 地址获取等逻辑
-      const { data, error: functionError } = await supabase.functions.invoke('submit-comment', {
-        body: {
-          postSlug: postSlug,     // 当前文章的 slug
-          content: commentText.trim()    // 评论内容
-        },
-      });
+      // 直接使用 Supabase 客户端插入评论到数据库
+      // 这是一个简化版本，不使用 Edge Function
+      const { data, error: insertError } = await supabase
+        .from('comments')
+        .insert({
+          post_slug: postSlug,
+          user_id: user.id,
+          content: commentText.trim(),
+          ip_address: 'Web Client' // 简化的IP地址标识
+        })
+        .select()
+        .single();
 
-      // 详细日志: Edge Function 调用完成情况
-      console.log("CommentForm.jsx - Edge Function 调用完成:", {
-        success: !functionError,
-        error: functionError,
+      // 详细日志: 数据库插入完成情况
+      console.log("CommentForm.jsx - 数据库插入完成:", {
+        success: !insertError,
+        error: insertError,
         data: data,
-        errorCode: functionError?.code,
-        errorMessage: functionError?.message,
-        errorDetails: functionError?.details,
-        errorHint: functionError?.hint
+        errorCode: insertError?.code,
+        errorMessage: insertError?.message,
+        errorDetails: insertError?.details,
+        errorHint: insertError?.hint
       });
 
-      // 如果 Edge Function 返回错误
-      if (functionError) {
+      // 如果数据库插入返回错误
+      if (insertError) {
         // 详细的错误信息
-        const errorMsg = `Edge Function 调用失败: ${functionError.message}${functionError.code ? ` (代码: ${functionError.code})` : ''}${functionError.hint ? ` 提示: ${functionError.hint}` : ''}`;
+        const errorMsg = `数据库插入失败: ${insertError.message}${insertError.code ? ` (代码: ${insertError.code})` : ''}${insertError.hint ? ` 提示: ${insertError.hint}` : ''}`;
         throw new Error(errorMsg);
       }
       
