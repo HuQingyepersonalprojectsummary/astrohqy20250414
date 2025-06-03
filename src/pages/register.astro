@@ -1,0 +1,24 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import UserRegistration from '../components/UserRegistration.jsx';
+import { SITE_TITLE } from '../consts';
+
+const pageTitle = `用户注册 | ${SITE_TITLE}`;
+const pageDescription = '注册新账户以享受完整功能';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <BaseHead title={pageTitle} description={pageDescription} />
+</head>
+<body>
+    <Header />
+    <main>
+        <UserRegistration client:load />
+    </main>
+    <Footer />
+</body>
+</html>

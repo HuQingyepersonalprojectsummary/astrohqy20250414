@@ -122,18 +122,18 @@ const noPostsText = `在 ${year} 年没有找到文章。`; // 无文章时的�
                     <ul>
                         {postsForYear.map(post => (
                             <li>
-                                <a href={`/blog/${post.slug}/`}> {/* 链接到单篇博文 */}
-                                    <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} /> {/* 文章图片，alt属性使用文章标题 */}
-                                    <h4 class="title">{post.data.title}</h4> {/* 文章标题 */}
+                                <a href={`/blog/${post.slug}/`}>
+                                    <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} />
+                                    <h4 class="title">{post.data.title}</h4>
                                     <p class="date">
-                                        <FormattedDate date={post.data.pubDate} /> {/* 格式化日期 */}
+                                        <FormattedDate date={post.data.pubDate} />
                                     </p>
                                 </a>
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <p>{noPostsText}</p> {/* 无文章时的提示 */}
+                    <p>{noPostsText}</p>
                 )}
             </section>
         </div>

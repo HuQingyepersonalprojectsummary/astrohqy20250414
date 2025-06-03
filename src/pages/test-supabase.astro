@@ -1,0 +1,121 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+
+const pageTitle = `Supabase连接测试 | ${SITE_TITLE}`;
+const pageDescription = '测试Supabase连接状态';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <BaseHead title={pageTitle} description={pageDescription} />
+</head>
+<body>
+    <Header />
+    <main style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+        <h1>Supabase连接测试</h1>
+        <div id="test-results">
+            <p>正在测试连接...</p>
+        </div>
+        <button id="test-connection" style="padding: 10px 20px; margin: 10px 0; background: #2337ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            重新测试连接
+        </button>
+        <div id="test-details" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px; font-family: monospace; white-space: pre-wrap;"></div>
+    </main>
+    <Footer />
+
+    <script>
+        import { supabase } from '@/lib/supabaseClient';
+
+        async function testSupabaseConnection() {
+            const resultsDiv = document.getElementById('test-results');
+            const detailsDiv = document.getElementById('test-details');
+            
+            resultsDiv.innerHTML = '<p>正在测试连接...</p>';
+            detailsDiv.innerHTML = '';
+
+            const tests = [];
+
+            try {
+                // 测试1: 检查环境变量
+                const url = import.meta.env.PUBLIC_SUPABASE_URL;
+                const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+                
+                tests.push(`✅ 环境变量检查:`);
+                tests.push(`   URL: ${url ? '已设置' : '❌ 未设置'}`);
+                tests.push(`   ANON_KEY: ${key ? '已设置' : '❌ 未设置'}`);
+                tests.push('');
+
+                // 测试2: 测试基本连接
+                tests.push('🔗 测试基本连接...');
+                const { data: healthData, error: healthError } = await supabase
+                    .from('_health_check')
+                    .select('*')
+                    .limit(1);
+
+                if (healthError) {
+                    tests.push(`   连接测试: ⚠️ ${healthError.message}`);
+                } else {
+                    tests.push(`   连接测试: ✅ 连接成功`);
+                }
+                tests.push('');
+
+                // 测试3: 测试认证状态
+                tests.push('🔐 测试认证状态...');
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (sessionError) {
+                    tests.push(`   认证测试: ❌ ${sessionError.message}`);
+                } else {
+                    tests.push(`   认证测试: ✅ 成功`);
+                    tests.push(`   当前用户: ${session?.user?.email || '未登录'}`);
+                }
+                tests.push('');
+
+                // 测试4: 测试数据库访问（尝试访问comments表）
+                tests.push('📊 测试数据库访问...');
+                const { data: commentsData, error: commentsError } = await supabase
+                    .from('comments')
+                    .select('count')
+                    .limit(1);
+
+                if (commentsError) {
+                    tests.push(`   Comments表: ⚠️ ${commentsError.message}`);
+                    if (commentsError.message.includes('relation "public.comments" does not exist')) {
+                        tests.push(`   建议: 需要创建comments表`);
+                    }
+                } else {
+                    tests.push(`   Comments表: ✅ 可访问`);
+                }
+
+                // 显示结果
+                const hasErrors = tests.some(test => test.includes('❌'));
+                const hasWarnings = tests.some(test => test.includes('⚠️'));
+                
+                if (!hasErrors && !hasWarnings) {
+                    resultsDiv.innerHTML = '<p style="color: green; font-weight: bold;">✅ 所有测试通过！Supabase配置正确。</p>';
+                } else if (!hasErrors) {
+                    resultsDiv.innerHTML = '<p style="color: orange; font-weight: bold;">⚠️ 基本配置正确，但有一些警告需要注意。</p>';
+                } else {
+                    resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 发现配置问题，请检查详细信息。</p>';
+                }
+
+            } catch (error) {
+                tests.push(`❌ 测试过程中发生错误: ${error.message}`);
+                resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 测试失败</p>';
+            }
+
+            detailsDiv.innerHTML = tests.join('\n');
+        }
+
+        // 页面加载时自动测试
+        document.addEventListener('DOMContentLoaded', testSupabaseConnection);
+        
+        // 按钮点击时重新测试
+        document.getElementById('test-connection').addEventListener('click', testSupabaseConnection);
+    </script>
+</body>
+</html>
