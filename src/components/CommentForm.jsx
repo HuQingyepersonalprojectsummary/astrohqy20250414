@@ -44,25 +44,39 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
     setMessage('');     // 清空之前的消息
 
     try {
-      // 直接使用 Supabase 客户端插入评论到数据库
-      // 这是一个简化版本，不使用 Edge Function
-      const { data, error: insertError } = await supabase
-        .from('comments')
-        .insert({
-          post_slug: postSlug,
-          user_id: user.id,
-          content: commentText.trim(),
-          ip_address: 'Web Client' // 简化的IP地址标识
-        })
-        .select()
-        .single();
+      // 详细日志：开始调用 Edge Function
+      console.log("CommentForm.jsx - 开始调用 Edge Function:", {
+        postSlug,
+        userId: user.id,
+        userEmail: user.email,
+        contentLength: commentText.trim().length
+      });
 
-      // 新增日志: 数据库插入完成情况
-      console.log("CommentForm.jsx - handleSubmit: 数据库插入完成，错误对象:", insertError, "数据:", data);
+      // 调用 Supabase Edge Function 'submit-comment' 来提交评论
+      // 这个 Edge Function 会处理评论的插入、用户身份验证、IP 地址获取等逻辑
+      const { data, error: functionError } = await supabase.functions.invoke('submit-comment', {
+        body: {
+          postSlug: postSlug,     // 当前文章的 slug
+          content: commentText.trim()    // 评论内容
+        },
+      });
 
-      // 如果数据库插入返回错误
-      if (insertError) {
-        throw insertError; // 抛出错误，由下面的 catch 块统一处理
+      // 详细日志: Edge Function 调用完成情况
+      console.log("CommentForm.jsx - Edge Function 调用完成:", {
+        success: !functionError,
+        error: functionError,
+        data: data,
+        errorCode: functionError?.code,
+        errorMessage: functionError?.message,
+        errorDetails: functionError?.details,
+        errorHint: functionError?.hint
+      });
+
+      // 如果 Edge Function 返回错误
+      if (functionError) {
+        // 详细的错误信息
+        const errorMsg = `Edge Function 调用失败: ${functionError.message}${functionError.code ? ` (代码: ${functionError.code})` : ''}${functionError.hint ? ` 提示: ${functionError.hint}` : ''}`;
+        throw new Error(errorMsg);
       }
       
       // 新增日志: Edge Function 调用成功后的数据 (如果需要更详细，可以保留此行)
