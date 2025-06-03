@@ -34,11 +34,12 @@ const CommentList = ({ postSlug, refreshKey }) => {
 
     try {
       // 从 'comments' 表中选择所有字段 (*), 并关联查询 'astrohqy20250414' 表中的 'username' 和 'avatar_url'
+      // 注意：使用 astrohqy20250414 表而不是 profiles 表
       const { data, error: fetchError } = await supabase
         .from('comments')
         .select(`
           *,
-          astrohqy20250414 (
+          astrohqy20250414!inner (
             username,
             avatar_url
           )
