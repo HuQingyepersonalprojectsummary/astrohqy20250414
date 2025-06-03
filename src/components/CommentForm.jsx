@@ -44,20 +44,25 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
     setMessage('');     // 清空之前的消息
 
     try {
-      // 调用名为 'submit-comment' 的 Supabase Edge Function
-      const { data, error: functionError } = await supabase.functions.invoke('submit-comment', {
-        body: { 
-          postSlug: postSlug,     // 当前文章的 slug
-          content: commentText    // 评论内容
-        },
-      });
+      // 直接使用 Supabase 客户端插入评论到数据库
+      // 这是一个简化版本，不使用 Edge Function
+      const { data, error: insertError } = await supabase
+        .from('comments')
+        .insert({
+          post_slug: postSlug,
+          user_id: user.id,
+          content: commentText.trim(),
+          ip_address: 'Web Client' // 简化的IP地址标识
+        })
+        .select()
+        .single();
 
-      // 新增日志: Edge Function 调用完成情况
-      console.log("CommentForm.jsx - handleSubmit: Edge Function 调用完成，错误对象:", functionError, "数据:", data);
+      // 新增日志: 数据库插入完成情况
+      console.log("CommentForm.jsx - handleSubmit: 数据库插入完成，错误对象:", insertError, "数据:", data);
 
-      // 如果 Edge Function 返回错误
-      if (functionError) {
-        throw functionError; // 抛出错误，由下面的 catch 块统一处理
+      // 如果数据库插入返回错误
+      if (insertError) {
+        throw insertError; // 抛出错误，由下面的 catch 块统一处理
       }
       
       // 新增日志: Edge Function 调用成功后的数据 (如果需要更详细，可以保留此行)
@@ -71,10 +76,10 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
       }
 
     } catch (err) {
-      // 更新日志: 处理调用 Edge Function 时捕获到的异常
-      console.error("CommentForm.jsx - handleSubmit: 调用 Edge Function 'submit-comment' 时捕获到异常:", err);
+      // 更新日志: 处理数据库插入时捕获到的异常
+      console.error("CommentForm.jsx - handleSubmit: 插入评论到数据库时捕获到异常:", err);
       // 设置对用户友好的错误信息
-      setError(`发表评论失败: ${err.message || "未知错误，请稍后再试。"}`); 
+      setError(`发表评论失败: ${err.message || "未知错误，请稍后再试。"}`);
     } finally {
       setLoading(false); // 无论成功或失败，结束加载状态
     }

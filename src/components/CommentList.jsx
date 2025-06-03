@@ -33,12 +33,12 @@ const CommentList = ({ postSlug, refreshKey }) => {
     setError('');     // 清空之前的错误信息
 
     try {
-      // 从 'comments' 表中选择所有字段 (*), 并关联查询 'profiles' 表中的 'username' 和 'avatar_url'
+      // 从 'comments' 表中选择所有字段 (*), 并关联查询 'astrohqy20250414' 表中的 'username' 和 'avatar_url'
       const { data, error: fetchError } = await supabase
         .from('comments')
         .select(`
           *,
-          profiles (
+          astrohqy20250414 (
             username,
             avatar_url
           )
@@ -125,10 +125,10 @@ const CommentList = ({ postSlug, refreshKey }) => {
     <div style={listStyle}>
       <h4 style={headingStyle}>{commentsHeadingText}</h4>
       {fetchedComments.map((comment) => {
-        // 确定作者名称：优先使用 profiles 表中的 username，其次是 comment.author (兼容旧数据)，最后是默认的“匿名用户”
-        const authorName = comment.profiles?.username || comment.author || defaultUsername;
-        // 获取头像 URL，优先使用 profiles 表中的 avatar_url
-        const avatarUrl = comment.profiles?.avatar_url;
+        // 确定作者名称：优先使用 astrohqy20250414 表中的 username，其次是 comment.author (兼容旧数据)，最后是默认的“匿名用户”
+        const authorName = comment.astrohqy20250414?.username || comment.author || defaultUsername;
+        // 获取头像 URL，优先使用 astrohqy20250414 表中的 avatar_url
+        const avatarUrl = comment.astrohqy20250414?.avatar_url;
 
         return (
           <div key={comment.id} style={commentItemStyle}>

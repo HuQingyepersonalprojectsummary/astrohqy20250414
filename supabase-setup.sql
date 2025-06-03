@@ -1,8 +1,10 @@
 -- Supabase 数据库设置脚本
 -- 请在 Supabase SQL 编辑器中执行此脚本
+-- 注意：使用现有的 astrohqy20250414 表作为用户资料表
 
--- 1. 创建 profiles 表（用户资料表）
-CREATE TABLE IF NOT EXISTS public.profiles (
+-- 1. 检查并更新 astrohqy20250414 表结构（如果需要）
+-- 如果表不存在，创建它；如果存在，确保有必要的字段
+CREATE TABLE IF NOT EXISTS public.astrohqy20250414 (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   username TEXT UNIQUE,
   full_name TEXT,
@@ -12,6 +14,45 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
+
+-- 如果表已存在但缺少某些字段，添加它们（这些语句会忽略已存在的字段）
+DO $$
+BEGIN
+  -- 添加 username 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='username') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN username TEXT UNIQUE;
+  END IF;
+
+  -- 添加 full_name 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='full_name') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN full_name TEXT;
+  END IF;
+
+  -- 添加 avatar_url 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='avatar_url') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN avatar_url TEXT;
+  END IF;
+
+  -- 添加 website 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='website') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN website TEXT;
+  END IF;
+
+  -- 添加 bio 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='bio') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN bio TEXT;
+  END IF;
+
+  -- 添加 created_at 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='created_at') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN created_at TIMESTAMPTZ DEFAULT now() NOT NULL;
+  END IF;
+
+  -- 添加 updated_at 字段（如果不存在）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='astrohqy20250414' AND column_name='updated_at') THEN
+    ALTER TABLE public.astrohqy20250414 ADD COLUMN updated_at TIMESTAMPTZ DEFAULT now() NOT NULL;
+  END IF;
+END $$;
 
 -- 2. 创建 comments 表（评论表）
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -30,26 +71,26 @@ CREATE INDEX IF NOT EXISTS comments_user_id_idx ON public.comments(user_id);
 CREATE INDEX IF NOT EXISTS comments_created_at_idx ON public.comments(created_at DESC);
 
 -- 4. 启用行级安全 (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.astrohqy20250414 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
--- 5. 创建 profiles 表的 RLS 策略
+-- 5. 创建 astrohqy20250414 表的 RLS 策略
 -- 允许用户查看所有用户的公开资料
-CREATE POLICY "Public profiles are viewable by everyone" 
-ON public.profiles 
-FOR SELECT 
+CREATE POLICY "Public profiles are viewable by everyone"
+ON public.astrohqy20250414
+FOR SELECT
 USING (true);
 
 -- 允许用户插入自己的资料
-CREATE POLICY "Users can insert their own profile" 
-ON public.profiles 
-FOR INSERT 
+CREATE POLICY "Users can insert their own profile"
+ON public.astrohqy20250414
+FOR INSERT
 WITH CHECK (auth.uid() = id);
 
 -- 允许用户更新自己的资料
-CREATE POLICY "Users can update own profile" 
-ON public.profiles 
-FOR UPDATE 
+CREATE POLICY "Users can update own profile"
+ON public.astrohqy20250414
+FOR UPDATE
 USING (auth.uid() = id);
 
 -- 6. 创建 comments 表的 RLS 策略
@@ -87,9 +128,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 8. 为 profiles 表创建 updated_at 触发器
-CREATE TRIGGER handle_updated_at_profiles
-  BEFORE UPDATE ON public.profiles
+-- 8. 为 astrohqy20250414 表创建 updated_at 触发器
+CREATE TRIGGER handle_updated_at_astrohqy20250414
+  BEFORE UPDATE ON public.astrohqy20250414
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
@@ -103,7 +144,7 @@ CREATE TRIGGER handle_updated_at_comments
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username, full_name, avatar_url)
+  INSERT INTO public.astrohqy20250414 (id, username, full_name, avatar_url)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'username', 'user_' || substr(NEW.id::text, 1, 8)),
