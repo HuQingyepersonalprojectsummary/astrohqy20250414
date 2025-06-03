@@ -1,0 +1,32 @@
+---
+// src/components/GoBackButton.astro
+export interface Props {
+  text?: string;
+  className?: string;
+}
+
+const { text = '返回上一页', className = '' } = Astro.props;
+---
+
+<button class={`go-back-button ${className}`.trim()} onclick="history.back()">
+  {text}
+</button>
+
+<style>
+  .go-back-button {
+    padding: 0.5em 1em;
+    background-color: var(--action-color, var(--accent, #007bff)); /* 使用现有主题变量或备用颜色 */
+    color: var(--action-text-color, #ffffff);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+  }
+
+  .go-back-button:hover {
+    background-color: var(--action-color-hover, var(--accent-dark, #0056b3)); /* 悬停颜色 */
+  }
+
+  /* 如果需要，可以添加更多特定样式 */
+</style>

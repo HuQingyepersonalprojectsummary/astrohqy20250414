@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; // 导入 React 和 useState hook
-import { supabase } from '../../lib/supabaseClient'; // 导入 Supabase 客户端实例
+import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例
 
 // UserLogin 组件：用于用户登录
 const UserLogin = () => {

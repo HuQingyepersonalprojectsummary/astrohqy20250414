@@ -12,21 +12,101 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 // 导入热力图显示组件 (React)
 import HeatmapDisplay from '../components/HeatmapDisplay.jsx';
+// 导入评论相关组件 (React)
+import CommentForm from '../components/CommentForm.jsx';
+import CommentList from '../components/CommentList.jsx';
 // 导入归档小部件组件
 import ArchiveWidget from '../components/ArchiveWidget.astro';
 
-// 定义此布局组件期望接收的 Props 类型，通常是博客文章的数据
-type Props = CollectionEntry<'blog'>['data'];
+// Props for BlogPost:
+// - 'entry': The full CollectionEntry object for the current post.
+// - All other props are from the post's frontmatter (post.data).
+type Props = CollectionEntry<'blog'>['data'] & { entry: CollectionEntry<'blog'> };
 
-// 从 Astro.props 中解构出博客文章的各项数据
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
-// Astro.props.id 通常包含基于文件路径的 slug (对于 src/content/blog/ 中的文章)
-// 这个 slug 将用于唯一标识文章，以便关联评论
-const postSlug = Astro.props.id; 
-console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.id": Astro.props.id, "title": title }); // 新增日志
-// 如果您的 frontmatter 中有明确定义的 slug 字段，可以使用 Astro.props.data.slug
-// 例如: const postSlug = Astro.props.data.slug;
-// 请确保 postSlug 是一个能够唯一标识文章的字符串。
+const { title, description, pubDate, updatedDate, heroImage } = Astro.props; // These come from ...post.data
+const entry = Astro.props.entry; // This is the full post object
+
+// 获取所有博客文章并排序，用于“上一篇/下一篇”导航
+import { getCollection } from 'astro:content';
+const allPosts = await getCollection('blog');
+const sortedPosts = allPosts.sort(
+  (a, b) => new Date(a.data.pubDate).valueOf() - new Date(b.data.pubDate).valueOf()
+);
+// Log the structure of sortedPosts to verify slugs
+console.log("BlogPost.astro - DEBUG: sortedPosts (first 3 entries):", JSON.stringify(sortedPosts.slice(0,3).map(p => ({id: p.id, slug: p.slug, title: p.data.title})), null, 2));
+
+
+// Slug determination logic
+let currentSlug = '';
+let slugSource = 'unknown';
+
+// Detailed log of the entry object passed to BlogPost
+console.log("BlogPost.astro - DEBUG: Astro.props.entry object:", JSON.stringify(entry, (key, value) => typeof value === 'function' ? 'function' : value, 2));
+
+if (entry && entry.slug && typeof entry.slug === 'string' && entry.slug.trim() !== '') {
+    currentSlug = entry.slug.trim();
+    slugSource = 'Astro.props.entry.slug';
+} else {
+    console.warn("BlogPost.astro: Astro.props.entry.slug is not a valid string or entry is missing.", {
+        entryExists: !!entry,
+        entrySlug: entry?.slug,
+        typeofEntrySlug: typeof entry?.slug,
+        title: title // Log title to help identify which page is logging
+    });
+    // If entry.slug fails, currentSlug remains empty, leading to no navigation buttons.
+}
+
+console.log({
+    "BlogPost.astro - Slug Determination Result": true,
+    source: slugSource,
+    determinedSlug: currentSlug,
+    entrySlugDirectAccess: entry?.slug, // Log direct access again for comparison
+    title: title
+});
+
+// The postSlug for data attributes, comments, etc., should be this definitive currentSlug.
+const postSlug = currentSlug;
+
+const currentIndex = sortedPosts.findIndex(p => p.slug === currentSlug);
+
+console.log({
+    "BlogPost.astro - Index Logic Result": true,
+    currentSlugForIndex: currentSlug,
+    calculatedIndex: currentIndex,
+    totalPostsInSortedList: sortedPosts.length,
+    firstPostSlugInSortedArray: sortedPosts.length > 0 ? sortedPosts[0]?.slug : 'N/A',
+    title: title
+});
+
+let prevPost = null;
+let nextPost = null;
+
+if (currentIndex !== -1 && sortedPosts.length > 0) { // 仅当当前文章被找到且文章列表不为空
+  if (sortedPosts.length > 1) {
+    if (currentIndex === 0) {
+      // 当前是第一篇，上一篇是最后一篇
+      prevPost = sortedPosts[sortedPosts.length - 1];
+      nextPost = sortedPosts[currentIndex + 1];
+    } else if (currentIndex === sortedPosts.length - 1) {
+      // 当前是最后一篇，下一篇是第一篇
+      prevPost = sortedPosts[currentIndex - 1];
+      nextPost = sortedPosts[0];
+    } else {
+      // 中间的文章
+      prevPost = sortedPosts[currentIndex - 1];
+      nextPost = sortedPosts[currentIndex + 1];
+    }
+  } else {
+    // 只有一篇文章，且被匹配到，则没有上一篇或下一篇
+    prevPost = null;
+    nextPost = null;
+  }
+} else {
+  // 如果当前 slug 未找到 (currentIndex === -1) 或文章列表为空，则不显示导航
+  console.warn("BlogPost.astro: Current slug not found in sorted posts or no posts available. Navigation will be hidden.", { currentSlug, currentIndex, postCount: sortedPosts.length });
+  prevPost = null;
+  nextPost = null;
+}
 ---
 
 {/* HTML 文档的 lang 属性设置为 "zh-CN" (中文) */}
@@ -54,6 +134,68 @@ console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.
 			.title h1 { margin: 0 0 0.5em 0; }
 			.date { margin-bottom: 0.5em; color: rgb(var(--gray)); }
 			.last-updated-on { font-style: italic; }
+
+            /* 文章导航样式 */
+            .post-navigation {
+                margin-top: 3em;
+                border-top: 1px solid var(--border-color);
+                padding-top: 1.5em;
+            }
+            .post-navigation-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap; /* 允许换行 */
+            }
+            .post-navigation-list li {
+                flex-basis: 48%; /* 接近一半宽度，留出间隙 */
+                margin-bottom: 1em; /* 移动设备上换行时的间距 */
+            }
+            .post-navigation-list a {
+                display: block;
+                padding: 0.8em 1em;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                text-decoration: none;
+                color: var(--text-color);
+                transition: background-color 0.2s ease, border-color 0.2s ease;
+            }
+            .post-navigation-list a:hover {
+                background-color: var(--code-bg-color);
+                border-color: var(--accent);
+            }
+            .post-navigation-list .nav-text {
+                display: block;
+                font-size: 0.9em;
+            }
+            .post-navigation-list .arrow {
+                font-size: 1.2em;
+                color: var(--accent);
+            }
+            .prev-post a {
+                text-align: left;
+            }
+            .next-post a {
+                text-align: right;
+            }
+            .prev-post .arrow {
+                margin-right: 0.5em;
+            }
+            .next-post .arrow {
+                margin-left: 0.5em;
+            }
+
+            @media (max-width: 600px) {
+                .post-navigation-list li {
+                    flex-basis: 100%; /* 在小屏幕上，每个链接占满一行 */
+                }
+                .prev-post a,
+                .next-post a {
+                    text-align: left; /* 小屏幕上统一左对齐 */
+                }
+            }
 		</style>
 	</head>
 
@@ -76,14 +218,36 @@ console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.
                             <hr />
                         </div>
                         <slot /> 
-                        {/* 评论区容器，通过 data-post-slug 属性传递 postSlug 给客户端脚本 */}
-                        <div id="comments-app" class="comments-section" data-post-slug={postSlug}>
-                            {/* 注释：评论表单和列表将由下面的客户端脚本渲染到此 div 中 */}
+                        {/* 评论区 */}
+                        <div class="comments-section">
+                            <CommentList postSlug={postSlug} client:visible />
+                            <CommentForm postSlug={postSlug} client:visible />
                         </div>
                         <div class="heatmap-container">
                             <HeatmapDisplay client:visible />
                         </div>
                     </div>
+                     {/* 上一篇/下一篇文章导航 */}
+                     <nav class="post-navigation" aria-label="文章导航">
+                        <ul class="post-navigation-list">
+                            {prevPost && (
+                                <li class="prev-post">
+                                    <a href={`/blog/${prevPost.slug}/`} rel="prev">
+                                        <span class="arrow">←</span>
+                                        <span class="nav-text">上一篇：{prevPost.data.title}</span>
+                                    </a>
+                                </li>
+                            )}
+                            {nextPost && (
+                                <li class="next-post">
+                                    <a href={`/blog/${nextPost.slug}/`} rel="next">
+                                        <span class="nav-text">下一篇：{nextPost.data.title}</span>
+                                        <span class="arrow">→</span>
+                                    </a>
+                                </li>
+                            )}
+                        </ul>
+                    </nav>
                 </article>
             </div>
             <aside class="sidebar-column"> 
@@ -91,66 +255,6 @@ console.log({ "BlogPost.astro - Frontmatter - postSlug": postSlug, "Astro.props.
             </aside>
 		</main>
 		<Footer />
-        
-        {/* 用于评论功能的客户端 React 脚本 */}
-        <script type="module">
-            console.log("BlogPost.astro: 客户端评论脚本已加载。"); // 新增日志
-            // 导入 React 相关的 hook 和 ReactDOM 用于渲染组件
-            import React, { useState, useCallback } from 'react'; // 添加 useState 和 useCallback
-            import ReactDOM from 'react-dom/client';
-            // 导入评论表单和评论列表 React 组件
-            import CommentForm from '../components/CommentForm.jsx';
-            import CommentList from '../components/CommentList.jsx';
 
-            // CommentsApp 组件：作为评论区 (表单和列表) 的根组件
-            // 它接收 postSlug 作为 prop，用于将评论与特定文章关联
-            const CommentsApp = ({ postSlug }) => { 
-                // refreshKey state 用于在提交新评论后强制 CommentList 组件刷新
-                // 当 refreshKey 的值改变时，CommentList 的 useEffect 会重新运行，从而获取最新的评论
-                const [refreshKey, setRefreshKey] = useState(0);
-
-                // handleCommentSubmitted 是一个回调函数，传递给 CommentForm 组件
-                // 当 CommentForm 成功提交一条评论后，会调用此函数
-                // 使用 useCallback 进行性能优化，确保此函数引用仅在依赖项未改变时不发生变化
-                const handleCommentSubmitted = useCallback(() => {
-                    console.log('CommentsApp (BlogPost.astro): 评论已提交，正在触发 CommentList 刷新...'); // 日志：评论已提交，准备刷新
-                    setRefreshKey(prevKey => prevKey + 1); // 更新 refreshKey (递增) 以触发刷新
-                }, []); // 空依赖数组意味着此回调函数在组件的生命周期内不会改变引用
-                
-                console.log("BlogPost.astro - CommentsApp: 正在渲染，Props:", { postSlug: postSlug, refreshKey: refreshKey }); // 更新日志格式
-
-                // 渲染评论列表 (CommentList) 和评论表单 (CommentForm)
-                return (
-                    <React.Fragment>
-                        {/* CommentList 接收 postSlug (用于获取该文章的评论) 和 refreshKey (用于强制刷新) */}
-                        <CommentList postSlug={postSlug} refreshKey={refreshKey} />
-                        {/* CommentForm 接收 postSlug (用于提交评论时关联文章) 和 onCommentSubmitted 回调 */}
-                        <CommentForm postSlug={postSlug} onCommentSubmitted={handleCommentSubmitted} />
-                    </React.Fragment>
-                );
-            };
-
-            // 获取用于渲染评论应用的 DOM 容器元素 (即 id="comments-app" 的 div)
-            const container = document.getElementById('comments-app');
-            // 确保容器元素存在于 DOM 中
-            if (container) {
-                // 从容器元素的 data-post-slug 属性中读取当前文章的 slug
-                const postSlugFromDOM = container.dataset.postSlug;
-                console.log({ "BlogPost.astro - Client Script - postSlugFromDOM": postSlugFromDOM }); // 新增日志
-                
-                // 如果成功获取到 postSlug
-                if (postSlugFromDOM) {
-                    const root = ReactDOM.createRoot(container); // 创建 React 根
-                    // 渲染 CommentsApp 组件，并将 postSlug 作为 prop 传递给它
-                    root.render(<CommentsApp postSlug={postSlugFromDOM} />);
-                } else {
-                    // 如果未能从 DOM 中获取 postSlug，则在控制台报错并在页面上显示错误信息
-                    console.error("评论区错误：未能从 DOM 中获取 postSlug。请确保 <div id='comments-app'> 具有 'data-post-slug' 属性且其值不为空。");
-                    container.innerHTML = "<p>无法加载评论：缺少文章标识 (postSlug 未找到于DOM)。</p>"; // 提示：无法加载评论，缺少文章标识
-                }
-            } else {
-                 console.warn("评论区容器 (div#comments-app) 未在 DOM 中找到。评论功能将无法加载。"); // 警告：评论区容器未找到
-            }
-        </script>
 	</body>
 </html>

@@ -2,31 +2,34 @@
 // 导入 Astro 内容集合相关的函数和类型
 import { getCollection, type CollectionEntry } from 'astro:content';
 // 导入基础头部组件，用于 SEO 和页面元信息
-import BaseHead from '../../../components/BaseHead.astro';
+import BaseHead from '../../../../components/BaseHead.astro';
 // 导入页头组件
-import Header from '../../../components/Header.astro';
+import Header from '../../../../components/Header.astro';
 // 导入页脚组件
-import Footer from '../../../components/Footer.astro';
+import Footer from '../../../../components/Footer.astro';
 // 导入日期格式化组件
-import FormattedDate from '../../../components/FormattedDate.astro';
+import FormattedDate from '../../../../components/FormattedDate.astro';
 // 导入归档侧边栏小部件
-import ArchiveWidget from '../../../components/ArchiveWidget.astro';
+import ArchiveWidget from '../../../../components/ArchiveWidget.astro';
 // 导入站点标题常量
-import { SITE_TITLE } from '../../../consts';
+import { SITE_TITLE } from '../../../../consts';
 
-// getStaticPaths 函数用于在构建时生成此动态路由的所有可能路径
+// getStaticPaths 函数用于在构建时生成此动态路由的所有可能路径 (年)
 export async function getStaticPaths() {
   const posts = await getCollection('blog'); // 获取所有博客文章
-  const years = new Set<string>(); // 创建一个 Set 存储所有唯一的年份
+  const paths = new Set<string>(); // 创建一个 Set 存储所有唯一的 "年" 组合字符串
   // 遍历文章，提取年份
   posts.forEach(post => {
     // 确保 pubDate 是有效的 Date 对象
     if (post.data.pubDate instanceof Date && !isNaN(post.data.pubDate.valueOf())) {
-      years.add(post.data.pubDate.getUTCFullYear().toString()); // 添加年份到 Set
+      const year = post.data.pubDate.getUTCFullYear().toString(); // 获取 UTC 年份
+      paths.add(year); // 添加 "年" 字符串到 Set
     }
   });
   // 将 Set 转换为数组，并映射为 Astro期望的参数格式
-  return Array.from(years).map(year => ({ params: { year } }));
+  return Array.from(paths).map(year => {
+    return { params: { year } };
+  });
 }
 
 // 从 Astro.params 获取当前页面的年份参数
@@ -42,9 +45,9 @@ const postsForYear = allPosts.filter(post => {
 
 // 设置页面标题和描述 (中文)
 const pageTitle = `${year}年文章归档 | ${SITE_TITLE}`;
-const pageDescription = `博客中 ${year} 年发布的所有文章。`;
+const pageDescription = `博客中 ${year}年发布的所有文章。`;
 const archiveHeading = `${year}年文章`; // 归档页主标题
-const noPostsText = `在 ${year} 年没有找到文章。`; // 无文章时的提示
+const noPostsText = `在 ${year}年没有找到文章。`; // 无文章时的提示
 ---
 
 {/* HTML 文档语言设置为 "zh-CN" */}
@@ -53,54 +56,25 @@ const noPostsText = `在 ${year} 年没有找到文章。`; // 无文章时的�
 <head>
     <BaseHead title={pageTitle} description={pageDescription} />
     <style>
-        /* 样式与 src/pages/blog/index.astro 和 src/layouts/BlogPost.astro 中的两栏布局样式保持一致 */
+        /* 样式与 src/pages/blog/archive/[year]/[month].astro 基本一致 */
         /* 文章列表样式 */
-        ul {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem; /* 列表项之间的间隙 */
-            list-style-type: none; /* 去除列表项目符号 */
-            margin: 0;
-            padding: 0;
-        }
-        ul li {
-            width: calc(50% - 1rem); /* 两列布局，每项占约一半宽度 */
-        }
-        ul li * {
-            text-decoration: none; /* 去除链接下划线 */
-            transition: 0.2s ease; /* 平滑过渡效果 */
-        }
-        ul li img {
-            margin-bottom: 0.5rem; /* 图片下方间距 */
-            border-radius: 12px; /* 图片圆角 */
-        }
-        ul li a {
-            display: block; /* 使整个卡片可点击 */
-        }
-        .title { /* 文章标题样式 */
-            margin: 0;
-            color: rgb(var(--black));
-            line-height: 1;
-        }
-        .date { /* 日期样式 */
-            margin: 0;
-            color: rgb(var(--gray));
-        }
-        ul li a:hover h4, /* 鼠标悬停时标题和日期颜色变化 */
-        ul li a:hover .date {
-            color: rgb(var(--accent));
-        }
-        ul a:hover img { /* 鼠标悬停时图片阴影效果 */
-            box-shadow: var(--box-shadow);
-        }
+        ul { display: flex; flex-wrap: wrap; gap: 2rem; list-style-type: none; margin: 0; padding: 0; }
+        ul li { width: calc(50% - 1rem); } /* 默认两列 */
+        ul li * { text-decoration: none; transition: 0.2s ease; }
+        ul li img { margin-bottom: 0.5rem; border-radius: 12px; }
+        ul li a { display: block; } /* 确保整个区域可点击 */
+        .title { margin: 0; color: rgb(var(--black)); line-height: 1; } /* 标题样式 */
+        .date { margin: 0; color: rgb(var(--gray)); } /* 日期样式 */
+        ul li a:hover h4, ul li a:hover .date { color: rgb(var(--accent)); } /* 鼠标悬停时标题和日期颜色变化 */
+        ul a:hover img { box-shadow: var(--box-shadow); } /* 鼠标悬停时图片阴影 */
 
         /* 页面整体布局样式 */
-        .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
-        .main-content-area { display: flex; flex-wrap: wrap; gap: 2em; width: 100%; max-width: 1280px; margin: 0 auto; padding: 1em; flex-grow: 1; }
-        .blog-list-column { flex: 3; min-width: 70%; } /* 博文列表区域 */
+        .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; } /* 确保页脚在底部 */
+        .main-content-area { display: flex; flex-wrap: wrap; gap: 2em; width: 100%; max-width: 1280px; margin: 0 auto; padding: 1em; flex-grow: 1; } /* 主内容区域布局 */
+        .blog-list-column { flex: 3; min-width: 70%; } /* 博文列表区域占据大部分空间 */
         .sidebar-column { flex: 1; min-width: 250px; } /* 侧边栏区域 */
         .archive-title { font-size: 2em; margin-bottom: 1em; color: rgb(var(--black)); } /* 归档页主标题样式 */
-
+        
         /* 响应式布局：小屏幕 */
         @media (max-width: 960px) {
             .main-content-area { flex-direction: column; align-items: center; } /* 垂直堆叠 */
@@ -122,9 +96,9 @@ const noPostsText = `在 ${year} 年没有找到文章。`; // 无文章时的�
                     <ul>
                         {postsForYear.map(post => (
                             <li>
-                                <a href={`/blog/${post.slug}/`}> {/* 链接到单篇博文 */}
-                                    <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} /> {/* 文章图片，alt属性使用文章标题 */}
-                                    <h4 class="title">{post.data.title}</h4> {/* 文章标题 */}
+                                <a href={`/blog/${post.slug}/`}>
+                                    <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} />
+                                    <h4 class="title">{post.data.title}</h4>
                                     <p class="date">
                                         <FormattedDate date={post.data.pubDate} /> {/* 格式化日期 */}
                                     </p>

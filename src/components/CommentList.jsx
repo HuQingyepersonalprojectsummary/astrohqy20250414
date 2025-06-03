@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'; // 导入 React hooks
-import { supabase } from '../../lib/supabaseClient'; // 导入 Supabase 客户端
+import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端
 
 // CommentList 组件：用于显示特定文章的评论列表
 // Props:

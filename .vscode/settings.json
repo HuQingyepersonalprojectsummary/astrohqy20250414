@@ -1,0 +1,5 @@
+{
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\Users\\xasr2\\.version-fox\\cache\\nodejs\\v-23.9.0\\nodejs-23.9.0\\;${env:PATH}"
+  }
+}

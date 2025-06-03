@@ -59,8 +59,8 @@ export async function getArchiveData(): Promise<YearData[]> {
 
   // 遍历排序后的年份，构建最终的 YearData 数组
   const result: YearData[] = sortedYears.map(year => {
-    // 从 Set 中获取该年份下的所有月份数字，并按降序排序
-    const monthNumbers = Array.from(archive[year]).sort((a, b) => b - a);
+    // 从 Set 中获取该年份下的所有月份数字，并按升序排序
+    const monthNumbers = Array.from(archive[year]).sort((a, b) => a - b);
     // 将月份数字映射为 MonthData 对象数组
     const months: MonthData[] = monthNumbers.map(monthNumber => ({
       monthName: monthNames[monthNumber - 1], // 从 monthNames 数组中获取月份名称

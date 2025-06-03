@@ -109,7 +109,7 @@ const noPostsText = `在 ${year}年${monthName}没有找到文章。`; // 无文
                     <ul>
                         {postsForMonth.map(post => (
                             <li>
-                                <a href={`/blog/${post.id}/`}> {/* 链接到单篇博文 */}
+                                <a href={`/blog/${post.slug}/`}> {/* 链接到单篇博文 */}
                                     <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} /> {/* 文章图片，alt属性使用文章标题 */}
                                     <h4 class="title">{post.data.title}</h4> {/* 文章标题 */}
                                     <p class="date">

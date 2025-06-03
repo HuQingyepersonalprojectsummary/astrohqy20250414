@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; // 导入 React, useState 和 useEffect hook
 import { useStore } from '@nanostores/react'; // 导入 useStore hook 用于订阅 Nano Store
-import { authStore } from '../../stores/authStore'; // 导入全局认证状态存储
-import { supabase } from '../../lib/supabaseClient'; // 导入 Supabase 客户端实例
+import { authStore } from '@/stores/authStore'; // 导入全局认证状态存储
+import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例
 
 // CommentForm 组件：用于用户提交评论
 // Props:

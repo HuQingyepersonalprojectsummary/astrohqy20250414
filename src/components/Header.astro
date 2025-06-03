@@ -3,11 +3,14 @@
 import HeaderLink from './HeaderLink.astro';
 // 导入站点标题常量
 import { SITE_TITLE } from '../consts';
+// 导入主题切换按钮组件
+import ThemeToggleButton from './ThemeToggleButton.astro';
 
 // 定义内部导航链接的文本和路径 (中文)
 const internalLinks = [
     { href: "/blog", text: "博客" },
-    { href: "/about", text: "关于" }
+    { href: "/about", text: "关于" },
+    { href: "/rss.xml", text: "RSS" }
 ];
 
 // 定义“退出登录”按钮的文本
@@ -34,6 +37,7 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态 (直接�
             {/* 登录和注册链接，初始显示，通过脚本根据认证状态控制 */}
             <HeaderLink href="/login" id="login-link" class="auth-link">{loginLinkText}</HeaderLink>
             <HeaderLink href="/register" id="register-link" class="auth-link">{registerLinkText}</HeaderLink>
+            <ThemeToggleButton /> {/* 在此处添加主题切换按钮 */}
 		</div>
 
         {/* 用户相关操作区域 - 初始隐藏或显示加载状态，通过脚本控制 */}
@@ -48,9 +52,9 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态 (直接�
 
 <script>
     // 客户端脚本，用于处理用户认证状态相关的 UI 更新和登出操作
-    import { supabase } from '../../lib/supabaseClient'; // 导入 Supabase 客户端
-    import { authStore } from '../../stores/authStore';    // 导入全局认证状态存储
-    import { initializeAuthListener } from '../../lib/authHandler'; // 导入认证状态监听器初始化函数
+    import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端
+    import { authStore } from '@/stores/authStore';    // 导入全局认证状态存储
+    import { initializeAuthListener } from '@/lib/authHandler'; // 导入认证状态监听器初始化函数
 
     initializeAuthListener(); // 初始化 Supabase 认证状态监听器
 

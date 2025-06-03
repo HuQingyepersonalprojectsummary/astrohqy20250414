@@ -27,8 +27,13 @@ export default defineConfig({
 		sitemap(),   // 初始化站点地图集成，将自动生成 sitemap.xml
 		react()      // 初始化 React 集成，允许在 Astro 项目中使用 React 组件 (.jsx, .tsx)
 	],
+	server: {
+  port: 8110,
+  host: true
+}
 
 	// 此处可以添加更多 Astro 配置选项，例如：
 	// server: { port: 3000 }, // 配置开发服务器端口
 	// build: { assets: 'assets' }, // 配置构建输出的静态资源目录名称
 });
+
