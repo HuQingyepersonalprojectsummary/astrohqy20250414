@@ -1,4 +1,9 @@
-# 📝 Astro 博客文章管理完整指南
+---
+title: 'Astro 博客文章管理完整指南'
+description: '详细介绍如何在 Astro 博客系统中添加、编辑、删除和管理文章，包含 Markdown 语法、发布流程和最佳实践'
+pubDate: 'Jan 15 2025'
+heroImage: '/blog-placeholder-2.jpg'
+---
 
 ## 📋 概述
 

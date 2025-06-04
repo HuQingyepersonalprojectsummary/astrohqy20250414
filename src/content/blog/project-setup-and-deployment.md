@@ -1,4 +1,9 @@
-# 🚀 Astro 博客项目建立和部署完整指南
+---
+title: 'Astro 博客项目建立和部署完整指南'
+description: '详细介绍如何从零开始搭建 Astro 博客系统，包含 Supabase 数据库配置、Vercel 部署、认证系统设置等完整流程'
+pubDate: 'Jan 15 2025'
+heroImage: '/blog-placeholder-4.jpg'
+---
 
 ## 📋 项目概述
 

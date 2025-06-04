@@ -1,4 +1,9 @@
-# 🚀 Astro 博客快速参考手册
+---
+title: 'Astro 博客快速参考手册'
+description: '博客系统的快速参考指南，包含常用命令、文章模板、Markdown 语法和故障排除等实用信息'
+pubDate: 'Jan 15 2025'
+heroImage: '/blog-placeholder-3.jpg'
+---
 
 ## 📝 文章管理速查
 
