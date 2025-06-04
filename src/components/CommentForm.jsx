@@ -44,12 +44,13 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
     setMessage('');     // 清空之前的消息
 
     try {
-      // 详细日志：开始插入评论 (直接数据库方式)
+      // 详细日志：开始插入评论 (直接数据库方式，不使用 Edge Function)
       console.log("CommentForm.jsx - 开始插入评论 (直接数据库):", {
         postSlug,
         userId: user.id,
         userEmail: user.email,
-        contentLength: commentText.trim().length
+        contentLength: commentText.trim().length,
+        method: "直接数据库插入"
       });
 
       // 直接使用 Supabase 客户端插入评论到数据库
