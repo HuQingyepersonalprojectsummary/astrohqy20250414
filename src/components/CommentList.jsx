@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react'; // 导入 React hooks
-import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import CommentItem from './CommentItem.jsx';
 
 // CommentList 组件：用于显示特定文章的评论列表
 // Props:
 // - postSlug: String, 当前文章的 slug，用于获取对应的评论
-// - refreshKey: any (optional), 当此 prop 改变时，会触发评论的重新加载。用于从外部强制刷新。
+// - refreshKey: any (optional), 当此 prop 改变时，会触发评论的重新加载
 const CommentList = ({ postSlug, refreshKey }) => {
-  // 新增日志: 组件加载和 props
   console.log("CommentList.jsx: 组件已加载，Props:", { postSlug, refreshKey });
 
   // State: fetchedComments 用于存储从数据库获取的评论
@@ -19,13 +19,11 @@ const CommentList = ({ postSlug, refreshKey }) => {
   const [refreshing, setRefreshing] = useState(false);
 
   // 定义获取评论的函数，使用 useCallback 优化
-  // 当 postSlug 或 refreshKey 改变时，此函数会得到新的引用，从而触发依赖此函数的 useEffect
   const fetchComments = useCallback(async () => {
-    // 新增日志: fetchComments 调用信息
     console.log(`CommentList.jsx - fetchComments: 正在为 postSlug '${postSlug}' 获取评论 (refreshKey: ${refreshKey})`);
 
     if (!postSlug) {
-      console.log("CommentList.jsx - fetchComments: postSlug 为空，不获取评论。"); // 日志：postSlug 为空
+      console.log("CommentList.jsx - fetchComments: postSlug 为空，不获取评论。");
       setFetchedComments([]);
       setLoading(false);
       return;
@@ -37,10 +35,10 @@ const CommentList = ({ postSlug, refreshKey }) => {
     } else {
       setLoading(true);
     }
-    setError('');     // 清空之前的错误信息
+    setError('');
 
     try {
-      // 从 'comments' 表中选择所有字段 (*), 并关联查询 'profiles' 表中的 'username' 和 'avatar_url'
+      // 从 'comments' 表中选择所有字段，包括新增的字段，并关联查询 'profiles' 表
       const { data, error: fetchError } = await supabase
         .from('comments')
         .select(`
@@ -51,36 +49,45 @@ const CommentList = ({ postSlug, refreshKey }) => {
           )
         `)
         .eq('post_slug', postSlug)
-        .order('created_at', { ascending: false });
+        .order('floor_number', { ascending: true }); // 按楼层号排序
 
       if (fetchError) {
-        // 新增日志: 数据库错误
         console.error("CommentList.jsx - fetchComments: 获取评论数据库错误:", fetchError);
-        throw fetchError; // 抛出错误，由 catch 块处理
+        throw fetchError;
       }
 
-      // 新增日志: 评论获取成功
       console.log('CommentList.jsx - fetchComments: 评论获取成功', data);
-      setFetchedComments(data || []); // 更新 fetchedComments state；如果 data 为 null，则设置为空数组
+      setFetchedComments(data || []);
     } catch (err) {
-      // 更新日志: 处理异常
       console.error("CommentList.jsx - fetchComments: 处理获取评论时发生异常:", err);
-      setError(`获取评论失败: ${err.message || "未知错误。"}`); // 设置对用户友好的错误信息
-      setFetchedComments([]); // 出错时清空评论列表
+      setError(`获取评论失败: ${err.message || "未知错误。"}`);
+      setFetchedComments([]);
     } finally {
-      setLoading(false); // 无论成功或失败，结束加载状态
-      setRefreshing(false); // 结束刷新状态
+      setLoading(false);
+      setRefreshing(false);
     }
-  }, [postSlug, refreshKey]); // 依赖项数组：当 postSlug 或 refreshKey 变化时，fetchComments 函数会重新创建
+  }, [postSlug, refreshKey]);
 
-  // Effect Hook: 组件挂载后以及 fetchComments (其引用因 postSlug 或 refreshKey 变化而改变) 变化时，执行获取评论的逻辑
+  // 处理评论更新的回调
+  const handleCommentUpdated = useCallback(() => {
+    console.log("CommentList.jsx - handleCommentUpdated: 评论已更新，重新获取评论列表");
+    fetchComments();
+  }, [fetchComments]);
+
+  // 处理评论删除的回调
+  const handleCommentDeleted = useCallback((commentId) => {
+    console.log("CommentList.jsx - handleCommentDeleted: 评论已删除，ID:", commentId);
+    // 从本地状态中移除已删除的评论，避免重新请求
+    setFetchedComments(prev => prev.filter(comment => comment.id !== commentId));
+  }, []);
+
+  // Effect Hook: 组件挂载后以及 fetchComments 变化时，执行获取评论的逻辑
   useEffect(() => {
-    // 新增日志: useEffect 调用 fetchComments
     console.log("CommentList.jsx - useEffect: 即将调用 fetchComments，依赖项变化 (postSlug 或 refreshKey)。");
     fetchComments();
-  }, [fetchComments]); // 依赖于 fetchComments 的引用
+  }, [fetchComments]);
 
-  // --- 样式定义 (改进版) ---
+  // 样式定义
   const listStyle = {
     marginTop: '20px',
     position: 'relative'
@@ -118,71 +125,13 @@ const CommentList = ({ postSlug, refreshKey }) => {
     border: '2px dashed rgb(var(--gray-light))'
   };
 
-  const commentItemStyle = {
-    border: '1px solid rgb(var(--gray-light))',
-    padding: '20px',
-    marginBottom: '16px',
-    borderRadius: '12px',
-    backgroundColor: '#fff',
-    boxShadow: '0 2px 8px rgba(var(--black), 0.08)',
-    transition: 'all 0.3s ease',
-    position: 'relative'
-  };
+  // UI 文本
+  const commentsHeadingText = "💬 评论列表";
+  const noCommentsYetText = "🎯 暂无评论，快来抢沙发吧！";
+  const loadingCommentsText = "⏳ 正在加载评论...";
+  const refreshingText = "🔄 正在刷新...";
 
-  const authorStyle = {
-    margin: '0 0 12px 0',
-    fontWeight: '600',
-    color: 'rgb(var(--black))',
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: '1.05rem'
-  };
-
-  const avatarStyle = {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    marginRight: '12px',
-    border: '2px solid rgb(var(--gray-light))',
-    objectFit: 'cover',
-    transition: 'transform 0.2s ease'
-  };
-
-  const ipStyle = {
-    fontSize: '0.8em',
-    color: 'rgb(var(--gray))',
-    marginLeft: '8px',
-    fontWeight: 'normal',
-    backgroundColor: 'rgb(var(--gray-light), 0.3)',
-    padding: '2px 6px',
-    borderRadius: '4px'
-  };
-
-  const textStyle = {
-    margin: '0 0 12px 0',
-    lineHeight: '1.7',
-    whiteSpace: 'pre-wrap',
-    fontSize: '1rem',
-    color: 'rgb(var(--gray-dark))'
-  };
-
-  const dateStyle = {
-    fontSize: '0.85em',
-    color: 'rgb(var(--gray))',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px'
-  };
-
-  // --- UI 文本 (中文) ---
-  const commentsHeadingText = "💬 评论列表"; // 评论区标题更新
-  const noCommentsYetText = "🎯 暂无评论，快来抢沙发吧！"; // 没有评论时的提示
-  const ipLabelText = "IP"; // IP 地址标签简化
-  const loadingCommentsText = "⏳ 正在加载评论..."; // 评论加载中提示
-  const refreshingText = "🔄 正在刷新..."; // 刷新中提示
-  const defaultUsername = "匿名用户"; // 当无法获取用户名时的默认显示
-
-  // 如果正在加载评论，显示加载提示信息 (同时显示标题)
+  // 如果正在加载评论，显示加载提示信息
   if (loading) {
     return (
       <div style={listStyle}>
@@ -192,7 +141,7 @@ const CommentList = ({ postSlug, refreshKey }) => {
     );
   }
 
-  // 如果加载过程中发生错误，显示错误信息 (同时显示标题)
+  // 如果加载过程中发生错误，显示错误信息
   if (error) {
     return (
       <div style={listStyle}>
@@ -202,7 +151,7 @@ const CommentList = ({ postSlug, refreshKey }) => {
     );
   }
 
-  // 如果没有评论 (获取成功但列表为空)，显示“暂无评论”的提示 (同时显示标题)
+  // 如果没有评论，显示"暂无评论"的提示
   if (!fetchedComments || fetchedComments.length === 0) {
     return (
       <div style={listStyle}>
@@ -224,71 +173,15 @@ const CommentList = ({ postSlug, refreshKey }) => {
           </span>
         )}
       </h4>
-      {fetchedComments.map((comment) => {
-        // 确定作者名称：优先使用 profiles 表中的 username，其次是 comment.author (兼容旧数据)，最后是默认的“匿名用户”
-        const authorName = comment.profiles?.username || comment.author || defaultUsername;
-        // 获取头像 URL，优先使用 profiles 表中的 avatar_url
-        const avatarUrl = comment.profiles?.avatar_url;
-
-        return (
-          <div
-            key={comment.id}
-            style={commentItemStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--black), 0.12)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(var(--black), 0.08)';
-            }}
-          >
-            <p style={authorStyle}>
-              {/* 如果有头像 URL，则显示头像图片 */}
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={`${authorName} 的头像`}
-                  style={avatarStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                />
-              ) : (
-                // 如果没有头像 URL，显示一个默认的占位符 (例如，一个灰色圆圈，包含作者首字母)
-                <span style={{
-                  ...avatarStyle,
-                  backgroundColor: '#6366f1',
-                  display: 'inline-flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  color: 'white',
-                  fontSize: '1rem',
-                  fontWeight: '600'
-                }}>
-                  {authorName.substring(0,1).toUpperCase()}
-                </span>
-              )}
-              {authorName}
-              {/* 条件渲染 IP 地址：仅当 ip_address 存在且不是获取失败的提示时显示 */}
-              {comment.ip_address && comment.ip_address !== 'IP地址获取失败' && (
-                <span style={ipStyle}>{ipLabelText}: {comment.ip_address}</span>
-              )}
-            </p>
-            {/* 评论内容，使用 comment.content */}
-            <p style={textStyle}>{comment.content}</p>
-            {/* 评论创建时间，使用 comment.created_at，并格式化为本地可读时间 */}
-            <small style={dateStyle}>
-              🕒 {new Date(comment.created_at).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </small>
-          </div>
-        );
-      })}
+      
+      {fetchedComments.map((comment) => (
+        <CommentItem
+          key={comment.id}
+          comment={comment}
+          onCommentUpdated={handleCommentUpdated}
+          onCommentDeleted={handleCommentDeleted}
+        />
+      ))}
 
       {/* CSS 动画样式 */}
       <style jsx>{`
@@ -301,4 +194,4 @@ const CommentList = ({ postSlug, refreshKey }) => {
   );
 };
 
-export default CommentList; // 导出 CommentList 组件
+export default CommentList;
