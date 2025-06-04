@@ -5,12 +5,18 @@ import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实
 const UserLogin = () => {
   // State: email (原 username), password 用于存储用户输入的邮箱和密码
   // 注意: Supabase 默认使用邮箱进行登录，因此将原 username 字段改为 email
-  const [email, setEmail] = useState(''); 
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // 新增 State: loading 用于处理提交加载状态，error 用于显示错误信息，message 用于显示操作结果信息
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  // 新增 State: 密码重置相关状态
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetError, setResetError] = useState('');
 
   // 处理表单提交事件 (异步函数)
   const handleSubmit = async (e) => {
@@ -53,6 +59,53 @@ const UserLogin = () => {
     }
   };
 
+  // 处理密码重置请求
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError('');
+    setResetMessage('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        setResetError(error.message);
+      } else {
+        setResetMessage('密码重置邮件已发送！请检查您的邮箱。');
+        setResetEmail('');
+        // 3秒后自动关闭重置表单
+        setTimeout(() => {
+          setShowResetForm(false);
+          setResetMessage('');
+        }, 3000);
+      }
+    } catch (error) {
+      setResetError('发送重置邮件失败，请稍后再试。');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // 切换到密码重置表单
+  const showPasswordReset = () => {
+    setShowResetForm(true);
+    setError('');
+    setMessage('');
+    setResetError('');
+    setResetMessage('');
+  };
+
+  // 返回登录表单
+  const backToLogin = () => {
+    setShowResetForm(false);
+    setResetError('');
+    setResetMessage('');
+    setResetEmail('');
+  };
+
   // 定义表单容器的内联样式 (与 UserRegistration 保持一致)
   const formContainerStyle = {
     border: '1px solid var(--gray-light, #e5e9f0)', padding: '25px', margin: '30px auto',
@@ -69,21 +122,96 @@ const UserLogin = () => {
   };
   const errorStyle = { color: 'red', marginBottom: '15px', textAlign: 'center' };
   const messageStyle = { color: 'green', marginBottom: '15px', textAlign: 'center' };
-  
+
+  // 新增样式：忘记密码链接和重置表单
+  const forgotPasswordStyle = {
+    textAlign: 'center',
+    marginTop: '15px',
+    fontSize: '0.9rem'
+  };
+
+  const linkStyle = {
+    color: 'var(--accent, #2337ff)',
+    cursor: 'pointer',
+    textDecoration: 'underline'
+  };
+
+  const backLinkStyle = {
+    color: 'var(--gray)',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    fontSize: '0.9rem',
+    marginTop: '15px',
+    textAlign: 'center'
+  };
+
   // 定义UI文本 (中文)
   const formTitleText = "用户登录";
+  const resetFormTitleText = "重置密码";
   // const usernameLabelText = "用户名"; // 改为邮箱登录
   const emailLabelText = "邮箱地址"; // 新增邮箱标签文本
   const passwordLabelText = "密码";
   const loginButtonText = "登录";
   const loadingButtonText = "登录中..."; // 按钮加载状态文本
+  const forgotPasswordText = "忘记密码？";
+  const resetButtonText = "发送重置邮件";
+  const resetLoadingText = "发送中...";
+  const backToLoginText = "返回登录";
+  const resetEmailPlaceholder = "输入您的邮箱地址";
+  const resetInstructionText = "请输入您的邮箱地址，我们将发送密码重置链接给您。";
 
   return (
     <div style={formContainerStyle}>
-      <h3 style={formTitleStyle}>{formTitleText}</h3>
-      {error && <p style={errorStyle}>{error}</p>}
-      {message && <p style={messageStyle}>{message}</p>}
-      <form onSubmit={handleSubmit}>
+      <h3 style={formTitleStyle}>
+        {showResetForm ? resetFormTitleText : formTitleText}
+      </h3>
+
+      {/* 显示错误和消息 */}
+      {!showResetForm && error && <p style={errorStyle}>{error}</p>}
+      {!showResetForm && message && <p style={messageStyle}>{message}</p>}
+      {showResetForm && resetError && <p style={errorStyle}>{resetError}</p>}
+      {showResetForm && resetMessage && <p style={messageStyle}>{resetMessage}</p>}
+
+      {/* 密码重置表单 */}
+      {showResetForm ? (
+        <div>
+          <p style={{ textAlign: 'center', marginBottom: '20px', color: 'rgb(var(--gray-dark))' }}>
+            {resetInstructionText}
+          </p>
+          <form onSubmit={handlePasswordReset}>
+            <div style={formGroupStyle}>
+              <label htmlFor="reset-email" style={labelStyle}>{emailLabelText}</label>
+              <input
+                type="email"
+                id="reset-email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                style={inputStyle}
+                disabled={resetLoading}
+                placeholder={resetEmailPlaceholder}
+              />
+            </div>
+            <button
+              type="submit"
+              style={{
+                ...buttonStyle,
+                backgroundColor: resetLoading ? 'var(--gray)' : 'var(--accent, #2337ff)'
+              }}
+              disabled={resetLoading}
+            >
+              {resetLoading ? resetLoadingText : resetButtonText}
+            </button>
+          </form>
+          <div style={backLinkStyle}>
+            <span onClick={backToLogin} style={linkStyle}>
+              {backToLoginText}
+            </span>
+          </div>
+        </div>
+      ) : (
+        /* 登录表单 */
+        <form onSubmit={handleSubmit}>
         {/* 邮箱输入组 (原用户名输入组) */}
         <div style={formGroupStyle}>
           <label htmlFor="login-email" style={labelStyle}>{emailLabelText}</label> {/* htmlFor 和 id 更新为 email */}
@@ -121,7 +249,15 @@ const UserLogin = () => {
         >
           {loading ? loadingButtonText : loginButtonText}
         </button>
+
+        {/* 忘记密码链接 */}
+        <div style={forgotPasswordStyle}>
+          <span onClick={showPasswordReset} style={linkStyle}>
+            {forgotPasswordText}
+          </span>
+        </div>
       </form>
+      )}
     </div>
   );
 };
