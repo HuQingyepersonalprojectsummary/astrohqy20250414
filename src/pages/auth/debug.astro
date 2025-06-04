@@ -1,0 +1,256 @@
+---
+// 调试页面 - 用于检查密码重置流程
+---
+
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码重置调试 - 博客系统</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .title {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .info-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        
+        .error-section {
+            background: #fff5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .success-section {
+            background: #f0fff4;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+        
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔧 密码重置调试页面</h1>
+        
+        <div class="info-section">
+            <h3>📋 当前页面信息</h3>
+            <div id="page-info"></div>
+        </div>
+        
+        <div class="info-section">
+            <h3>🔗 URL 参数</h3>
+            <div id="url-params"></div>
+        </div>
+        
+        <div class="info-section">
+            <h3>🔐 Supabase 会话状态</h3>
+            <div id="session-info"></div>
+        </div>
+        
+        <div class="info-section">
+            <h3>🧪 测试操作</h3>
+            <button class="button" onclick="testPasswordReset()">测试发送重置邮件</button>
+            <button class="button" onclick="checkSession()">检查当前会话</button>
+            <button class="button" onclick="clearSession()">清除会话</button>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <div class="info-section">
+            <h3>📝 使用说明</h3>
+            <ol>
+                <li>如果您是通过重置邮件链接访问此页面，URL 应该包含 access_token 和 refresh_token 参数</li>
+                <li>检查 Supabase 会话状态是否正常</li>
+                <li>如果会话无效，请重新申请密码重置</li>
+                <li>确认 Supabase 重定向 URL 配置正确</li>
+            </ol>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
+        
+        const supabaseUrl = 'https://ztqqlysnfjtneyviqrbn.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cXFseXNuZmp0bmV5dmlxcmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY5MzY0NzMsImV4cCI6MjA1MjUxMjQ3M30.biWEJln7a4T4_GBaKF5C0ZHurBpVXbPoZtvjBNWgSNI';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        // 显示页面信息
+        function displayPageInfo() {
+            const pageInfo = document.getElementById('page-info');
+            pageInfo.innerHTML = `
+                <pre>
+当前 URL: ${window.location.href}
+用户代理: ${navigator.userAgent}
+时间戳: ${new Date().toISOString()}
+                </pre>
+            `;
+        }
+        
+        // 显示 URL 参数
+        function displayUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramsDiv = document.getElementById('url-params');
+            
+            const params = {};
+            for (const [key, value] of urlParams.entries()) {
+                params[key] = value;
+            }
+            
+            paramsDiv.innerHTML = `<pre>${JSON.stringify(params, null, 2)}</pre>`;
+        }
+        
+        // 检查会话状态
+        window.checkSession = async function() {
+            const sessionDiv = document.getElementById('session-info');
+            const resultsDiv = document.getElementById('test-results');
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                sessionDiv.innerHTML = `
+                    <pre>
+会话状态: ${session ? '有效' : '无效'}
+错误: ${error ? error.message : '无'}
+用户ID: ${session?.user?.id || '无'}
+邮箱: ${session?.user?.email || '无'}
+过期时间: ${session?.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : '无'}
+                    </pre>
+                `;
+                
+                if (session) {
+                    resultsDiv.innerHTML = '<div class="success-section">✅ 会话有效，可以进行密码重置</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="error-section">❌ 会话无效，需要重新申请密码重置</div>';
+                }
+            } catch (error) {
+                sessionDiv.innerHTML = `<pre>检查会话时出错: ${error.message}</pre>`;
+                resultsDiv.innerHTML = '<div class="error-section">❌ 检查会话时出错</div>';
+            }
+        };
+        
+        // 测试密码重置
+        window.testPasswordReset = async function() {
+            const email = prompt('请输入要重置密码的邮箱地址:');
+            if (!email) return;
+            
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<div class="info-section">⏳ 正在发送重置邮件...</div>';
+            
+            try {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/auth/reset-password`,
+                });
+                
+                if (error) {
+                    resultsDiv.innerHTML = `<div class="error-section">❌ 发送失败: ${error.message}</div>`;
+                } else {
+                    resultsDiv.innerHTML = '<div class="success-section">✅ 重置邮件已发送，请检查邮箱</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error-section">❌ 发送异常: ${error.message}</div>`;
+            }
+        };
+        
+        // 清除会话
+        window.clearSession = async function() {
+            try {
+                await supabase.auth.signOut();
+                document.getElementById('test-results').innerHTML = '<div class="success-section">✅ 会话已清除</div>';
+                setTimeout(() => {
+                    checkSession();
+                }, 1000);
+            } catch (error) {
+                document.getElementById('test-results').innerHTML = `<div class="error-section">❌ 清除会话失败: ${error.message}</div>`;
+            }
+        };
+        
+        // 处理重置令牌
+        async function handleResetToken() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+            const type = urlParams.get('type');
+            
+            if (type === 'recovery' && accessToken && refreshToken) {
+                const resultsDiv = document.getElementById('test-results');
+                resultsDiv.innerHTML = '<div class="info-section">⏳ 正在处理重置令牌...</div>';
+                
+                try {
+                    const { data, error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    });
+                    
+                    if (error) {
+                        resultsDiv.innerHTML = `<div class="error-section">❌ 设置会话失败: ${error.message}</div>`;
+                    } else {
+                        resultsDiv.innerHTML = '<div class="success-section">✅ 重置令牌处理成功，会话已建立</div>';
+                        setTimeout(() => {
+                            checkSession();
+                        }, 1000);
+                    }
+                } catch (error) {
+                    resultsDiv.innerHTML = `<div class="error-section">❌ 处理令牌异常: ${error.message}</div>`;
+                }
+            }
+        }
+        
+        // 页面加载时执行
+        window.addEventListener('load', async () => {
+            displayPageInfo();
+            displayUrlParams();
+            await handleResetToken();
+            await checkSession();
+        });
+    </script>
+</body>
+</html>
