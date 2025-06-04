@@ -22,6 +22,10 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
   const [error, setError] = useState('');
   // State: message 用于显示操作结果信息 (例如提交成功)
   const [message, setMessage] = useState('');
+  // State: showSuccess 用于控制成功动画
+  const [showSuccess, setShowSuccess] = useState(false);
+  // State: isFocused 用于控制文本域焦点状态
+  const [isFocused, setIsFocused] = useState(false);
 
   // 处理表单提交事件 (异步函数)
   const handleSubmit = async (e) => {
@@ -84,15 +88,24 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
         throw new Error(errorMsg);
       }
       
-      // 新增日志: Edge Function 调用成功后的数据 (如果需要更详细，可以保留此行)
-      // console.log("CommentForm.jsx - handleSubmit: Edge Function 调用成功，响应数据:", data); 
-      setMessage("评论已成功发表！"); // 消息：评论成功发表
+      // 成功提交评论后的处理
+      console.log("CommentForm.jsx - 评论提交成功，数据:", data);
+
+      // 显示成功消息和动画
+      setMessage("🎉 评论已成功发表！");
+      setShowSuccess(true);
       setCommentText(''); // 清空文本域内容
-      
+
       // 如果父组件传递了 onCommentSubmitted 回调函数，则调用它
       if (onCommentSubmitted) {
-        onCommentSubmitted(); 
+        onCommentSubmitted();
       }
+
+      // 3秒后隐藏成功消息
+      setTimeout(() => {
+        setMessage('');
+        setShowSuccess(false);
+      }, 3000);
 
     } catch (err) {
       // 更新日志: 处理数据库插入时捕获到的异常
@@ -104,21 +117,99 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
     }
   };
 
-  // --- 样式定义 (与之前版本或设计稿保持一致) ---
-  const formStyle = { border: '1px solid rgb(var(--gray-light))', padding: '20px', marginTop: '20px', borderRadius: '8px', backgroundColor: 'rgb(var(--gray-light), 0.3)', boxShadow: 'inset 0 1px 3px rgba(var(--black), 0.1)'};
-  const headingStyle = { marginTop: '0', marginBottom: '15px', color: 'rgb(var(--gray-dark))', fontSize: '1.25em'};
-  const textareaStyle = { width: '100%', minHeight: '100px', padding: '10px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid rgb(var(--gray))', fontSize: '1rem', lineHeight: '1.5', fontFamily: 'inherit'};
-  const buttonStyle = { padding: '10px 20px', backgroundColor: loading ? 'var(--gray)' : 'var(--accent)', color: 'white', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem', fontWeight: '500', marginTop: '10px'};
-  const errorStyle = { color: 'red', marginBottom: '10px', textAlign: 'left' };
-  const messageStyle = { color: 'green', marginBottom: '10px', textAlign: 'left' };
+  // --- 样式定义 (改进版) ---
+  const formStyle = {
+    border: '1px solid rgb(var(--gray-light))',
+    padding: '24px',
+    marginTop: '20px',
+    borderRadius: '12px',
+    backgroundColor: 'rgb(var(--gray-light), 0.2)',
+    boxShadow: '0 4px 6px rgba(var(--black), 0.1)',
+    transition: 'all 0.3s ease'
+  };
+
+  const headingStyle = {
+    marginTop: '0',
+    marginBottom: '20px',
+    color: 'rgb(var(--gray-dark))',
+    fontSize: '1.3em',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  };
+
+  const textareaStyle = {
+    width: '100%',
+    minHeight: '120px',
+    padding: '12px',
+    boxSizing: 'border-box',
+    borderRadius: '8px',
+    border: '2px solid rgb(var(--gray-light))',
+    fontSize: '1rem',
+    lineHeight: '1.6',
+    fontFamily: 'inherit',
+    resize: 'vertical',
+    transition: 'border-color 0.3s ease',
+    backgroundColor: 'white'
+  };
+
+  const textareaFocusStyle = {
+    ...textareaStyle,
+    borderColor: 'var(--accent)',
+    outline: 'none',
+    boxShadow: '0 0 0 3px rgba(var(--accent), 0.1)'
+  };
+
+  const buttonStyle = {
+    padding: '12px 24px',
+    backgroundColor: loading ? '#ccc' : 'var(--accent)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: loading ? 'not-allowed' : 'pointer',
+    fontSize: '1rem',
+    fontWeight: '600',
+    marginTop: '16px',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    minWidth: '140px',
+    justifyContent: 'center'
+  };
+
+  const errorStyle = {
+    color: '#dc3545',
+    marginBottom: '12px',
+    textAlign: 'left',
+    padding: '12px',
+    backgroundColor: '#f8d7da',
+    border: '1px solid #f5c6cb',
+    borderRadius: '6px',
+    fontSize: '0.9rem'
+  };
+
+  const messageStyle = {
+    color: '#155724',
+    marginBottom: '12px',
+    textAlign: 'left',
+    padding: '12px',
+    backgroundColor: showSuccess ? '#d4edda' : 'transparent',
+    border: showSuccess ? '1px solid #c3e6cb' : 'none',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    transform: showSuccess ? 'scale(1.02)' : 'scale(1)',
+    transition: 'all 0.3s ease'
+  };
 
   // --- UI 文本 (中文) ---
-  const formTitleText = "留下评论";
-  const textareaPlaceholderText = "在这里写下您的评论...";
-  const submitButtonText = "发表评论";
-  const loadingButtonText = "发表中..."; // 按钮在加载状态时的文本
-  const loginToCommentText = "请登录后发表评论。"; // 用户未登录时的提示
-  const loadingAuthText = "正在加载用户状态..."; // 认证状态加载中的提示
+  const formTitleText = "✍️ 留下评论";
+  const textareaPlaceholderText = "分享您的想法和见解...";
+  const submitButtonText = "📝 发表评论";
+  const loadingButtonText = "⏳ 发表中..."; // 按钮在加载状态时的文本
+  const loginToCommentText = "🔐 请登录后发表评论。"; // 用户未登录时的提示
+  const loadingAuthText = "⏳ 正在加载用户状态..."; // 认证状态加载中的提示
 
   // 新增日志: 检查 authIsLoading
   console.log("CommentForm.jsx: 渲染前检查 authIsLoading:", authIsLoading);
@@ -148,31 +239,75 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
           {/* 如果有成功/提示信息，则显示 */}
           {message && <p style={messageStyle}>{message}</p>}
           {/* 评论输入文本域 */}
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder={textareaPlaceholderText}
-            required // HTML5 内置校验：必填
-            style={textareaStyle}
-            disabled={loading} // 评论提交过程中禁用文本域
-          />
+          <div style={{ position: 'relative' }}>
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder={textareaPlaceholderText}
+              required // HTML5 内置校验：必填
+              style={isFocused ? textareaFocusStyle : textareaStyle}
+              disabled={loading} // 评论提交过程中禁用文本域
+              maxLength={5000}
+            />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '8px',
+              fontSize: '0.85rem',
+              color: 'rgb(var(--gray))'
+            }}>
+              <span>
+                {commentText.length > 0 && (
+                  <span style={{ color: commentText.length > 4500 ? '#dc3545' : 'rgb(var(--gray))' }}>
+                    {commentText.length}/5000 字符
+                  </span>
+                )}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'rgb(var(--gray-light))' }}>
+                支持 Markdown 格式
+              </span>
+            </div>
+          </div>
           {/* 提交按钮 */}
-          <button 
-            type="submit" 
-            style={buttonStyle}
-            // 鼠标悬停和移开时的背景色变化效果 (仅在非加载状态下)
-            onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }} 
-            onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
-            disabled={loading} // 评论提交过程中禁用按钮
+          <button
+            type="submit"
+            style={{
+              ...buttonStyle,
+              opacity: (loading || commentText.trim().length === 0) ? 0.6 : 1,
+              transform: loading ? 'scale(0.98)' : 'scale(1)'
+            }}
+            disabled={loading || commentText.trim().length === 0} // 评论提交过程中或内容为空时禁用按钮
           >
             {/* 根据加载状态显示不同的按钮文本 */}
-            {loading ? loadingButtonText : submitButtonText}
+            {loading ? (
+              <>
+                <span style={{
+                  display: 'inline-block',
+                  animation: 'spin 1s linear infinite',
+                  marginRight: '4px'
+                }}>⏳</span>
+                {loadingButtonText}
+              </>
+            ) : (
+              submitButtonText
+            )}
           </button>
         </form>
       ) : (
         // 如果用户未登录，则显示提示信息，要求用户登录
         <p>{loginToCommentText}</p>
       )}
+
+      {/* CSS 动画样式 */}
+      <style jsx>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

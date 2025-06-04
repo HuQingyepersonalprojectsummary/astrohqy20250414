@@ -12,9 +12,8 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 // 导入热力图显示组件 (React)
 import HeatmapDisplay from '../components/HeatmapDisplay.jsx';
-// 导入评论相关组件 (React)
-import CommentForm from '../components/CommentForm.jsx';
-import CommentList from '../components/CommentList.jsx';
+// 导入评论容器组件 (React)
+import CommentsContainer from '../components/CommentsContainer.jsx';
 // 导入归档小部件组件
 import ArchiveWidget from '../components/ArchiveWidget.astro';
 
@@ -219,10 +218,7 @@ if (currentIndex !== -1 && sortedPosts.length > 0) { // 仅当当前文章被找
                         </div>
                         <slot /> 
                         {/* 评论区 */}
-                        <div class="comments-section">
-                            <CommentList postSlug={postSlug} client:visible />
-                            <CommentForm postSlug={postSlug} client:visible />
-                        </div>
+                        <CommentsContainer postSlug={postSlug} client:visible />
                         <div class="heatmap-container">
                             <HeatmapDisplay client:visible />
                         </div>
