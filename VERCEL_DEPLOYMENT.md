@@ -16,8 +16,8 @@
 4. 添加以下变量：
 
 ```
-PUBLIC_SUPABASE_URL=https://ztqqlysnfjtneyviqrbn.supabase.co
-PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cXFseXNuZmp0bmV5dmlxcmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTU1MDAsImV4cCI6MjA2NDQzMTUwMH0.QEqDiJklzcWhh6wQFcsHx0SX-W1zyFfSh_mVr7ADZDQ
+PUBLIC_SUPABASE_URL=your_supabase_project_url
+PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ### 2. Supabase 重定向URL配置
