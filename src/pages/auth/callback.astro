@@ -39,6 +39,7 @@ const pageDescription = '正在处理您的认证信息...';
         async function handleAuthCallback() {
             const statusDiv = document.getElementById('auth-status');
             const loadingSpinner = document.getElementById('loading-spinner');
+            if (!statusDiv || !loadingSpinner) return;
 
             try {
                 // 获取URL中的哈希参数

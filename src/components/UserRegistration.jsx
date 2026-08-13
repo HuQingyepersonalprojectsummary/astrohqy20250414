@@ -101,13 +101,13 @@ const UserRegistration = () => {
 
   // 定义表单容器的内联样式 (与之前保持一致)
   const formContainerStyle = {
-    border: '1px solid var(--gray-light, #e5e9f0)', padding: '25px', margin: '30px auto',
-    borderRadius: '8px', maxWidth: '450px', backgroundColor: '#fff', boxShadow: 'var(--box-shadow)'
+    border: '1px solid var(--border-color)', padding: '25px', margin: '30px auto',
+    borderRadius: '8px', maxWidth: '450px', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--box-shadow)'
   };
-  const formTitleStyle = { textAlign: 'center', marginBottom: '25px', color: 'rgb(var(--black))', fontSize: '1.5em' };
+  const formTitleStyle = { textAlign: 'center', marginBottom: '25px', color: 'var(--heading-color)', fontSize: '1.5em' };
   const formGroupStyle = { marginBottom: '20px' };
   const labelStyle = { display: 'block', marginBottom: '8px', color: 'rgb(var(--gray-dark))', fontWeight: 'bold' };
-  const inputStyle = { width: '100%', padding: '12px', boxSizing: 'border-box', border: '1px solid rgb(var(--gray-light))', borderRadius: '4px', fontSize: '1rem' };
+  const inputStyle = { width: '100%', padding: '12px', boxSizing: 'border-box', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' };
   const buttonStyle = {
     width: '100%', padding: '12px', backgroundColor: loading ? 'var(--gray)' : 'var(--accent, #2337ff)', // 加载时按钮变灰
     color: 'white', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer', // 加载时禁用鼠标指针

@@ -6,7 +6,15 @@ const siteOwnerName = "博主名称或站点名称";
 const allRightsReservedText = "版权所有。"; 
 
 // 定义社交/平台链接的sr-only（屏幕阅读器）文本和显示文本
-const socialLinks = [
+type SocialLink = {
+    platform: string;
+    srText: string;
+    href: string;
+    iconType: "svg" | "text";
+    displayText?: string;
+};
+
+const socialLinks: SocialLink[] = [
     { platform: "Mastodon", srText: "在 Mastodon 上关注 Astro", href: "https://m.webtoo.ls/@astro", iconType: "svg" },
     { platform: "Twitter", srText: "在 Twitter 上关注 Astro", href: "https://twitter.com/astrodotbuild", iconType: "svg" },
     { platform: "GitHub", srText: "访问 Astro 的 GitHub 仓库", href: "https://github.com/withastro/astro", iconType: "svg" }

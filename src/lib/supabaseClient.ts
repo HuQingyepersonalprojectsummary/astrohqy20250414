@@ -18,32 +18,16 @@ console.log('Supabase 客户端初始化:', {
   env: import.meta.env.MODE
 });
 
-// 类型和存在性检查：确保环境变量已正确设置
-// 如果 Supabase URL 未定义，则抛出错误，因为客户端无法在没有 URL 的情况下初始化
+// 如果 Supabase URL 未定义，则抛出警告 (构建时可能缺少环境变量)
 if (!supabaseUrl) {
-  const error = "Supabase URL (PUBLIC_SUPABASE_URL) 未在环境变量中定义。";
-  console.error(error);
-  throw new Error(error);
+  console.warn("警告: Supabase URL (PUBLIC_SUPABASE_URL) 未在环境变量中定义。");
 }
-// 如果 Supabase 匿名密钥未定义，则抛出错误
+// 如果 Supabase 匿名密钥未定义，则抛出警告
 if (!supabaseAnonKey) {
-  const error = "Supabase Anon Key (PUBLIC_SUPABASE_ANON_KEY) 未在环境变量中定义。";
-  console.error(error);
-  throw new Error(error);
+  console.warn("警告: Supabase Anon Key (PUBLIC_SUPABASE_ANON_KEY) 未在环境变量中定义。");
 }
 
-// 创建并导出 Supabase 客户端实例
-// 使用从环境变量中获取的 URL 和匿名密钥来初始化客户端
-// 这个 'supabase' 对象将用于与您的 Supabase 后端进行所有交互 (例如，数据库操作、用户认证等)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // 设置认证重定向URL，确保邮箱确认后重定向到正确的地址
-    // 在生产环境中使用Vercel域名，开发环境中使用localhost
-    redirectTo: typeof window !== 'undefined'
-      ? window.location.origin
-      : (import.meta.env.PROD ? 'https://astrohqy20250414.vercel.app' : 'http://localhost:8110')
-  }
-});
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder_key');
 
 // 可选的类型增强说明：
 // 如果您的项目需要更强的类型支持（例如，针对您的数据库 schema），

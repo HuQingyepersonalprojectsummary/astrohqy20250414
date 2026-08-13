@@ -59,17 +59,11 @@
 </style>
 
 <script is:inline>
-  const themeToggle = document.getElementById('theme-toggle');
-  const sunIcon = themeToggle.querySelector('.sun-icon');
-  const moonIcon = themeToggle.querySelector('.moon-icon');
-
   const applyTheme = (theme) => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      // CSS will handle icon display based on .dark class
     } else {
       document.documentElement.classList.remove('dark');
-      // CSS will handle icon display based on .dark class
     }
   };
 
@@ -80,9 +74,23 @@
     applyTheme(newTheme);
   };
 
-  themeToggle.addEventListener('click', toggleTheme);
+  // Function to setup the button listener
+  const setupThemeToggle = () => {
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      // Remove old listener to avoid duplicates if re-attached
+      themeToggle.removeEventListener('click', toggleTheme);
+      themeToggle.addEventListener('click', toggleTheme);
+    }
+  };
 
-  // Apply initial theme on load
+  // Run on initial load
+  setupThemeToggle();
+
+  // Run on View Transitions navigation
+  document.addEventListener('astro:page-load', setupThemeToggle);
+
+  // Apply initial theme on load (only needs to run once)
   const savedTheme = localStorage.getItem('theme');
   if (savedTheme) {
     applyTheme(savedTheme);

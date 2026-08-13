@@ -45,6 +45,7 @@ PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
         // 检查环境变量
         function checkEnvironmentVariables() {
             const envResults = document.getElementById('env-results');
+            if (!envResults) return;
             
             const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
             const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -75,6 +76,7 @@ PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
         // 测试 Supabase 连接
         async function testSupabaseConnection() {
             const resultsDiv = document.getElementById('connection-results');
+            if (!resultsDiv) return;
             resultsDiv.innerHTML = '正在测试连接...';
             
             try {
@@ -90,7 +92,7 @@ PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
                     resultsDiv.innerHTML = `<p style="color: green;">✅ Supabase 连接成功！</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
                 }
             } catch (err) {
-                resultsDiv.innerHTML = `<p style="color: red;">❌ 连接错误: ${err.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: red;">❌ 连接错误: ${(err as Error).message}</p>`;
                 console.error('Supabase 连接测试失败:', err);
             }
         }
@@ -100,7 +102,10 @@ PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
             checkEnvironmentVariables();
             
             // 绑定测试按钮
-            document.getElementById('test-connection').addEventListener('click', testSupabaseConnection);
+            const testBtn = document.getElementById('test-connection');
+            if (testBtn) {
+                testBtn.addEventListener('click', testSupabaseConnection);
+            }
         });
     </script>
 </body>

@@ -20,16 +20,79 @@ const posts = (await getCollection('blog')).sort(
 		<Header />
 		<main>
 			<section>
+				<style>
+					ul {
+						display: grid;
+						grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+						gap: 2rem;
+						list-style-type: none;
+						margin: 0;
+						padding: 0;
+					}
+					ul li * {
+						text-decoration: none;
+					}
+					ul li a {
+						display: flex;
+						flex-direction: column;
+						height: 100%;
+						background: var(--card-bg);
+						border: 1px solid var(--card-border);
+						border-radius: 12px;
+						overflow: hidden;
+						box-shadow: var(--card-shadow);
+						transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+					}
+					ul li a:hover {
+						transform: translateY(-4px);
+						box-shadow: var(--card-shadow-hover);
+						border-color: var(--accent);
+					}
+					ul li a img {
+						width: 100%;
+						border-radius: 0;
+						object-fit: cover;
+						aspect-ratio: 2/1;
+						margin: 0;
+					}
+					.content-wrapper {
+						padding: 1.5rem;
+						display: flex;
+						flex-direction: column;
+						flex-grow: 1;
+					}
+					.title {
+						margin: 0;
+						color: rgb(var(--black));
+						line-height: 1.2;
+					}
+					.date {
+						margin: 0.5rem 0;
+						color: rgb(var(--gray));
+						font-size: 0.9em;
+					}
+					.description {
+						margin: 0;
+						color: var(--text-color);
+						font-size: 0.9em;
+						display: -webkit-box;
+						-webkit-line-clamp: 3;
+						-webkit-box-orient: vertical;
+						overflow: hidden;
+					}
+				</style>
 				<ul>
 					{
 						posts.map((post) => (
 							<li>
 								<a href={`/blog/${post.slug}/`}>
-									<h4 class="title">{post.data.title}</h4>
+									{post.data.heroImage && <img width={1020} height={510} src={post.data.heroImage} alt={post.data.title} />}
+									<div class="content-wrapper">
+										<h4 class="title">{post.data.title}</h4>
+										<p class="date"><FormattedDate date={post.data.pubDate} /></p>
+										<p class="description">{post.data.description}</p>
+									</div>
 								</a>
-								<FormattedDate date={post.data.pubDate} />
-								{post.data.heroImage && <img width={1020} height={510} src={post.data.heroImage} alt={post.data.title} />}
-								<p>{post.data.description}</p>
 							</li>
 						))
 					}

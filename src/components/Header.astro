@@ -60,14 +60,14 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态 (直接�
 
     const userSessionControls = document.getElementById('user-session-controls');
     const userIdentifierDisplay = document.getElementById('user-identifier');
-    const logoutButton = document.getElementById('logout-button');
+    const logoutButton = document.getElementById('logout-button') as HTMLButtonElement | null;
     const loginLink = document.getElementById('login-link');
     const registerLink = document.getElementById('register-link');
     // loadingUserText 从 frontmatter 传递下来，并在 userIdentifierDisplay 初始化时使用
     // currentLoadingUserText 用于在脚本中动态设置加载文本，确保一致性
     const currentLoadingUserText = "{loadingUserText}"; // Astro 会将 frontmatter 变量注入
 
-    const updateAuthUI = (authState) => {
+    const updateAuthUI = (authState: any) => {
         // 新增日志: 记录传入的 authState
         console.log("Header.astro - updateAuthUI: 接收到 authState:", authState);
 
@@ -128,13 +128,13 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态 (直接�
 
 <style>
 	/* 头部整体样式 */
-	header { margin: 0; padding: 0 1em; background: white; box-shadow: 0 2px 8px rgba(var(--black), 5%); }
+	header { margin: 0; padding: 0 1em; background: rgba(var(--bg-color-rgb), 0.85); box-shadow: 0 2px 8px rgba(var(--black), 5%); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: background-color 0.3s ease; }
 	/* 导航栏样式 */
 	nav { display: flex; align-items: center; justify-content: space-between; }
 	/* 站点标题 (h2) 样式 */
 	h2 { margin: 0; font-size: 1em; }
 	/* 站点标题链接样式 */
-	h2 a, h2 a.active { text-decoration: none; font-weight: 700; color: rgb(var(--black)); }
+	h2 a, h2 a.active { text-decoration: none; font-weight: 700; color: var(--heading-color); }
 	/* 内部链接容器的 flex 布局 */
 	.internal-links { display: flex; align-items: center; gap: 1em; }
     /* .social-links 相关的样式可以保留或移除，如果确认不再使用 .social-links 类名 */

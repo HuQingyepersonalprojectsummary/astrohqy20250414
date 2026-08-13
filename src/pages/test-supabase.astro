@@ -44,6 +44,7 @@ const pageDescription = '测试Supabase连接状态';
         async function testSupabaseConnection() {
             const resultsDiv = document.getElementById('test-results');
             const detailsDiv = document.getElementById('test-details');
+            if (!resultsDiv || !detailsDiv) return;
             
             resultsDiv.innerHTML = '<p>正在测试连接...</p>';
             detailsDiv.innerHTML = '';
@@ -115,7 +116,8 @@ const pageDescription = '测试Supabase连接状态';
                 }
 
             } catch (error) {
-                tests.push(`❌ 测试过程中发生错误: ${error.message}`);
+                const err = error as Error;
+                tests.push(`❌ 测试过程中发生错误: ${err.message}`);
                 resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 测试失败</p>';
             }
 
@@ -125,6 +127,7 @@ const pageDescription = '测试Supabase连接状态';
         // 测试注册功能
         async function testRegistration() {
             const resultsDiv = document.getElementById('register-results');
+            if (!resultsDiv) return;
             resultsDiv.innerHTML = '<p>正在测试注册API...</p>';
 
             try {
@@ -157,7 +160,7 @@ const pageDescription = '测试Supabase连接状态';
                         <p style="color: red;"><strong>❌ 注册API测试失败:</strong></p>
                         <p>错误: ${error.message}</p>
                         <p>代码: ${error.code || 'N/A'}</p>
-                        <p>详情: ${error.details || 'N/A'}</p>
+                        <p>详情: ${(error as any).details || 'N/A'}</p>
                     `;
                 } else {
                     resultsDiv.innerHTML = `
@@ -170,10 +173,11 @@ const pageDescription = '测试Supabase连接状态';
                 }
 
             } catch (err) {
-                console.error('注册测试异常:', err);
+                const error = err as Error;
+                console.error('注册测试异常:', error);
                 resultsDiv.innerHTML = `
                     <p style="color: red;"><strong>❌ 注册测试异常:</strong></p>
-                    <p>${err.message}</p>
+                    <p>${error.message}</p>
                 `;
             }
         }
@@ -182,10 +186,12 @@ const pageDescription = '测试Supabase连接状态';
         document.addEventListener('DOMContentLoaded', testSupabaseConnection);
 
         // 按钮点击时重新测试
-        document.getElementById('test-connection').addEventListener('click', testSupabaseConnection);
+        const testConnBtn = document.getElementById('test-connection');
+        if (testConnBtn) testConnBtn.addEventListener('click', testSupabaseConnection);
 
         // 注册测试按钮
-        document.getElementById('test-register').addEventListener('click', testRegistration);
+        const testRegBtn = document.getElementById('test-register');
+        if (testRegBtn) testRegBtn.addEventListener('click', testRegistration);
     </script>
 </body>
 </html>

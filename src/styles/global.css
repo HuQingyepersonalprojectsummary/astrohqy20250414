@@ -19,6 +19,7 @@
 
 	/* Theme specific variables */
 	--bg-color: #ffffff; /* White background for light mode */
+	--bg-color-rgb: 255, 255, 255; /* For glassmorphism */
 	--text-color: rgb(var(--gray-dark)); /* Dark gray text for light mode */
 	--heading-color: rgb(var(--black)); /* Black headings for light mode */
 	--link-color: var(--accent);
@@ -26,6 +27,12 @@
 	--code-bg-color: rgb(var(--gray-light));
 	--border-color: rgb(var(--gray-light));
 	--body-gradient: linear-gradient(rgba(var(--gray-light), 0.5), #fff) no-repeat; /* Adjusted light mode gradient */
+	
+	/* Card and Progress UI */
+	--card-bg: #ffffff;
+	--card-border: #e5e9f0;
+	--card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	--card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 html.dark {
@@ -38,6 +45,7 @@ html.dark {
 	--gray-dark: 216, 222, 233; /* Lighter gray-dark for dark mode text */
 
 	--bg-color: #2e3440; /* Dark background for dark mode (Nord polar night) */
+	--bg-color-rgb: 46, 52, 64; /* For glassmorphism */
 	--text-color: #d8dee9; /* Light gray text for dark mode (Nord snow storm) */
 	--heading-color: #eceff4; /* Lighter headings for dark mode */
 	--link-color: var(--accent);
@@ -45,6 +53,12 @@ html.dark {
 	--code-bg-color: #3b4252; /* Darker code background */
 	--border-color: #4c566a; /* Darker border */
 	--body-gradient: linear-gradient(rgba(46, 52, 64, 0.8), #2e3440) no-repeat; /* Darker gradient for dark mode */
+
+	/* Card and Progress UI */
+	--card-bg: #3b4252;
+	--card-border: #4c566a;
+	--card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+	--card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 }
 @font-face {
 	font-family: 'Atkinson';
