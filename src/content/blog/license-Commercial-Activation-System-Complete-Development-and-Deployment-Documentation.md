@@ -1,9 +1,9 @@
-```
+---
 title: 'License 激活系统：完整开发、部署与商业化文档汇总'
 description: 'License 激活系统：完整开发、部署与商业化文档汇总'
 pubDate: 'August 13 2026'
 heroImage: '/blog-placeholder-1.jpg'
-```
+---
 
 # 
 
