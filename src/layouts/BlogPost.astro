@@ -262,12 +262,22 @@ if (currentIndex !== -1 && sortedPosts.length > 0) { // 仅当当前文章被找
 		</button>
 
 		<script>
+            let currentScrollHandler: (() => void) | null = null;
+            let currentBackToTopHandler: (() => void) | null = null;
+
 			function setupBlogPostInteractions() {
 				const progressBar = document.getElementById('reading-progress-bar');
 				const backToTopBtn = document.getElementById('back-to-top');
 
-				// Scroll event listener
-				function handleScroll() {
+                // 清理旧的事件监听器，防止 ViewTransitions 导致内存泄漏和重复触发
+                if (currentScrollHandler) {
+                    window.removeEventListener('scroll', currentScrollHandler);
+                }
+                if (backToTopBtn && currentBackToTopHandler) {
+                    backToTopBtn.removeEventListener('click', currentBackToTopHandler);
+                }
+
+				currentScrollHandler = function handleScroll() {
 					// Progress Bar
 					if (progressBar) {
 						const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
@@ -295,15 +305,16 @@ if (currentIndex !== -1 && sortedPosts.length > 0) { // 仅当当前文章被找
 							}, 300);
 						}
 					}
-				}
+				};
 
-				window.addEventListener('scroll', handleScroll);
-				handleScroll(); // Init on load
+				window.addEventListener('scroll', currentScrollHandler);
+				currentScrollHandler(); // Init on load
 
 				if (backToTopBtn) {
-					backToTopBtn.addEventListener('click', () => {
+                    currentBackToTopHandler = () => {
 						window.scrollTo({ top: 0, behavior: 'smooth' });
-					});
+					};
+					backToTopBtn.addEventListener('click', currentBackToTopHandler);
 				}
 			}
 

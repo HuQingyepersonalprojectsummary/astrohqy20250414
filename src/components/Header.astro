@@ -58,72 +58,74 @@ const loadingUserText = "加载中..."; // 用户信息加载中状态 (直接�
 
     initializeAuthListener(); // 初始化 Supabase 认证状态监听器
 
-    const userSessionControls = document.getElementById('user-session-controls');
-    const userIdentifierDisplay = document.getElementById('user-identifier');
-    const logoutButton = document.getElementById('logout-button') as HTMLButtonElement | null;
-    const loginLink = document.getElementById('login-link');
-    const registerLink = document.getElementById('register-link');
-    // loadingUserText 从 frontmatter 传递下来，并在 userIdentifierDisplay 初始化时使用
-    // currentLoadingUserText 用于在脚本中动态设置加载文本，确保一致性
-    const currentLoadingUserText = "{loadingUserText}"; // Astro 会将 frontmatter 变量注入
+    let unsubscribeAuthStore: (() => void) | null = null; // 用于存储全局状态取消订阅函数，防止多次绑定
 
-    const updateAuthUI = (authState: any) => {
-        // 新增日志: 记录传入的 authState
-        console.log("Header.astro - updateAuthUI: 接收到 authState:", authState);
-
-        if (!userSessionControls || !userIdentifierDisplay || !loginLink || !registerLink) {
-            console.warn("Header Auth UI: 部分DOM元素未找到，UI可能不会正确更新。");
-            return;
+    function setupHeaderInteractions() {
+        // 如果之前已经订阅过，先取消订阅（解决 ViewTransitions 多次加载导致的内存泄漏）
+        if (unsubscribeAuthStore) {
+            unsubscribeAuthStore();
+            unsubscribeAuthStore = null;
         }
 
-        if (authState.isLoading) {
-            // 新增日志: 指明当前应用的 UI 状态
-            console.log("Header.astro - updateAuthUI: 正在应用“加载中”的UI状态。");
-            userIdentifierDisplay.textContent = currentLoadingUserText; // 使用脚本中定义的加载文本
-            userSessionControls.style.display = 'flex'; 
-            loginLink.style.display = 'none';
-            registerLink.style.display = 'none';
-            if(logoutButton) logoutButton.style.display = 'none'; 
-        } else if (authState.user) {
-            // 新增日志: 指明当前应用的 UI 状态
-            console.log("Header.astro - updateAuthUI: 正在应用“用户已登录”的UI状态。用户:", authState.user.email);
-            userSessionControls.style.display = 'flex'; 
-            userIdentifierDisplay.textContent = authState.user.email || '用户'; // 显示用户邮箱或通用文本 "用户"
-            if(logoutButton) logoutButton.style.display = 'inline-block'; 
-            loginLink.style.display = 'none'; 
-            registerLink.style.display = 'none'; 
-        } else {
-            // 新增日志: 指明当前应用的 UI 状态
-            console.log("Header.astro - updateAuthUI: 正在应用“用户未登录”的UI状态。");
-            userSessionControls.style.display = 'none'; 
-            userIdentifierDisplay.textContent = ''; 
-            loginLink.style.display = 'inline'; 
-            registerLink.style.display = 'inline'; 
+        const userSessionControls = document.getElementById('user-session-controls');
+        const userIdentifierDisplay = document.getElementById('user-identifier');
+        const logoutButton = document.getElementById('logout-button') as HTMLButtonElement | null;
+        const loginLink = document.getElementById('login-link');
+        const registerLink = document.getElementById('register-link');
+        
+        // currentLoadingUserText 从 frontmatter 传递下来
+        const currentLoadingUserText = "{loadingUserText}"; 
+
+        const updateAuthUI = (authState: any) => {
+            if (!userSessionControls || !userIdentifierDisplay || !loginLink || !registerLink) {
+                return;
+            }
+
+            if (authState.isLoading) {
+                userIdentifierDisplay.textContent = currentLoadingUserText; 
+                userSessionControls.style.display = 'flex'; 
+                loginLink.style.display = 'none';
+                registerLink.style.display = 'none';
+                if(logoutButton) logoutButton.style.display = 'none'; 
+            } else if (authState.user) {
+                userSessionControls.style.display = 'flex'; 
+                userIdentifierDisplay.textContent = authState.user.email || '用户'; 
+                if(logoutButton) logoutButton.style.display = 'inline-block'; 
+                loginLink.style.display = 'none'; 
+                registerLink.style.display = 'none'; 
+            } else {
+                userSessionControls.style.display = 'none'; 
+                userIdentifierDisplay.textContent = ''; 
+                loginLink.style.display = 'inline'; 
+                registerLink.style.display = 'inline'; 
+            }
+        };
+
+        // 重新订阅当前最新的 DOM 元素
+        unsubscribeAuthStore = authStore.subscribe(state => { 
+            updateAuthUI(state);
+        });
+
+        const handleLogout = async () => { 
+            if(logoutButton) logoutButton.disabled = true;
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                alert('登出失败: ' + error.message); 
+                if(logoutButton) logoutButton.disabled = false;
+            }
+        };
+
+        if (logoutButton) { 
+            // 每次页面加载后，获取到的是新的 button 节点，直接绑定即可
+            logoutButton.addEventListener('click', handleLogout);
         }
-    };
-
-    const unsubscribe = authStore.subscribe(state => { 
-        // 更新日志信息，使其更明确
-        console.log('Header.astro - authStore.subscribe: authStore 状态已改变，新状态:', state);
-        updateAuthUI(state);
-    });
-
-    const handleLogout = async () => { 
-        if(logoutButton) logoutButton.disabled = true;
-        console.log("Header.astro - handleLogout: 用户点击登出按钮。"); // 新增日志
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            console.error('Header.astro - handleLogout: 登出时发生错误:', error.message); // 更新日志信息
-            alert('登出失败: ' + error.message); 
-            if(logoutButton) logoutButton.disabled = false;
-        } else {
-            console.log('Header.astro - handleLogout: 用户已成功从 Supabase 登出。UI 将通过 authStore 更新。'); // 更新日志信息
-        }
-    };
-
-    if (logoutButton) { // 添加登出按钮的事件监听器
-        logoutButton.addEventListener('click', handleLogout);
     }
+
+    // 在页面首次加载时执行
+    setupHeaderInteractions();
+
+    // 在 Astro 视图过渡（路由跳转）后再次执行，以重新绑定事件
+    document.addEventListener('astro:page-load', setupHeaderInteractions);
 </script>
 
 <style>
