@@ -1,6 +1,5 @@
 ---
-// 导入 Astro 内容集合相关的函数和类型
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 // 导入基础头部组件，用于 SEO 和页面元信息
 import BaseHead from '../../../../components/BaseHead.astro';
 // 导入页头组件
@@ -96,7 +95,7 @@ const noPostsText = `在 ${year}年没有找到文章。`; // 无文章时的提
                     <ul>
                         {postsForYear.map(post => (
                             <li>
-                                <a href={`/blog/${post.slug}/`}>
+                                <a href={`/blog/${post.id}/`}>
                                     <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} />
                                     <h4 class="title">{post.data.title}</h4>
                                     <p class="date">

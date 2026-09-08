@@ -31,51 +31,23 @@ const allPosts = await getCollection('blog');
 const sortedPosts = allPosts.sort(
   (a, b) => new Date(a.data.pubDate).valueOf() - new Date(b.data.pubDate).valueOf()
 );
-// Log the structure of sortedPosts to verify slugs
-console.log("BlogPost.astro - DEBUG: sortedPosts (first 3 entries):", JSON.stringify(sortedPosts.slice(0,3).map(p => ({id: p.id, slug: p.slug, title: p.data.title})), null, 2));
-
-
 // Slug determination logic
 let currentSlug = '';
-let slugSource = 'unknown';
 
-// Detailed log of the entry object passed to BlogPost
-console.log("BlogPost.astro - DEBUG: Astro.props.entry object:", JSON.stringify(entry, (key, value) => typeof value === 'function' ? 'function' : value, 2));
-
-if (entry && entry.slug && typeof entry.slug === 'string' && entry.slug.trim() !== '') {
-    currentSlug = entry.slug.trim();
-    slugSource = 'Astro.props.entry.slug';
+if (entry && entry.id && typeof entry.id === 'string' && entry.id.trim() !== '') {
+    currentSlug = entry.id.trim();
 } else {
-    console.warn("BlogPost.astro: Astro.props.entry.slug is not a valid string or entry is missing.", {
+    console.warn("BlogPost.astro: Astro.props.entry.id is not a valid string or entry is missing.", {
         entryExists: !!entry,
-        entrySlug: entry?.slug,
-        typeofEntrySlug: typeof entry?.slug,
-        title: title // Log title to help identify which page is logging
+        entrySlug: entry?.id,
+        title: title
     });
-    // If entry.slug fails, currentSlug remains empty, leading to no navigation buttons.
 }
-
-console.log({
-    "BlogPost.astro - Slug Determination Result": true,
-    source: slugSource,
-    determinedSlug: currentSlug,
-    entrySlugDirectAccess: entry?.slug, // Log direct access again for comparison
-    title: title
-});
 
 // The postSlug for data attributes, comments, etc., should be this definitive currentSlug.
 const postSlug = currentSlug;
 
-const currentIndex = sortedPosts.findIndex(p => p.slug === currentSlug);
-
-console.log({
-    "BlogPost.astro - Index Logic Result": true,
-    currentSlugForIndex: currentSlug,
-    calculatedIndex: currentIndex,
-    totalPostsInSortedList: sortedPosts.length,
-    firstPostSlugInSortedArray: sortedPosts.length > 0 ? sortedPosts[0]?.slug : 'N/A',
-    title: title
-});
+const currentIndex = sortedPosts.findIndex(p => p.id === currentSlug);
 
 let prevPost = null;
 let nextPost = null;
@@ -228,7 +200,7 @@ if (currentIndex !== -1 && sortedPosts.length > 0) { // 仅当当前文章被找
                         <ul class="post-navigation-list">
                             {prevPost && (
                                 <li class="prev-post">
-                                    <a href={`/blog/${prevPost.slug}/`} rel="prev">
+                                    <a href={`/blog/${prevPost.id}/`} rel="prev">
                                         <span class="arrow">←</span>
                                         <span class="nav-text">上一篇：{prevPost.data.title}</span>
                                     </a>
@@ -236,7 +208,7 @@ if (currentIndex !== -1 && sortedPosts.length > 0) { // 仅当当前文章被找
                             )}
                             {nextPost && (
                                 <li class="next-post">
-                                    <a href={`/blog/${nextPost.slug}/`} rel="next">
+                                    <a href={`/blog/${nextPost.id}/`} rel="next">
                                         <span class="nav-text">下一篇：{nextPost.data.title}</span>
                                         <span class="arrow">→</span>
                                     </a>

@@ -39,7 +39,7 @@ export default defineConfig({
 
 	server: {
 		port: 8110,
-		host: true
+		host: false
 	}
 
 	// 此处可以添加更多 Astro 配置选项，例如：

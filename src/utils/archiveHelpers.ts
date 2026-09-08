@@ -44,7 +44,7 @@ export async function getArchiveData(): Promise<YearData[]> {
       archive[year].add(monthNumber);
     } else {
       // 如果日期无效，则在控制台输出警告，并跳过此文章
-      console.warn(`文章 "${post.slug}" 的发布日期 (pubDate) 无效: ${post.data.pubDate}。已从归档中跳过。`);
+      console.warn(`文章 "${post.id}" 的发布日期 (pubDate) 无效: ${post.data.pubDate}。已从归档中跳过。`);
     }
   });
 

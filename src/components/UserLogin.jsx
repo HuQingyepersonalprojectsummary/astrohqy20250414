@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; // 导入 React 和 useState hook
-import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例与配置状态
 
 // UserLogin 组件：用于用户登录
 const UserLogin = () => {
@@ -42,12 +42,6 @@ const UserLogin = () => {
       setMessage("登录成功！");
       setEmail('');   // 清空表单
       setPassword('');
-      // 此处可以添加进一步操作，例如：
-      // 1. 更新全局用户状态 (例如使用 Context API 或 Zustand/Nano Stores)
-      // 2. 将用户重定向到个人资料页或首页: window.location.href = '/profile';
-      // 3. 如果需要，可以在这里存储 session 信息 (Supabase JS 客户端会自动处理 session 持久化)
-      console.log('登录成功，用户信息:', data.user);
-      console.log('登录成功，会话信息:', data.session);
       // 触发一个自定义事件，以便其他部分（如 Header）可以监听到登录状态的改变
       // 这是一种简单的跨组件通信方式，更复杂的场景可能需要状态管理器
       const event = new CustomEvent('authChange', { detail: { loggedIn: true, user: data.user, session: data.session } });
@@ -166,6 +160,13 @@ const UserLogin = () => {
         {showResetForm ? resetFormTitleText : formTitleText}
       </h3>
 
+      {/* 访客模式提示 (S05 修复) */}
+      {!isSupabaseConfigured && (
+        <div style={{ padding: '10px 15px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px', marginBottom: '15px', fontSize: '0.9rem', textAlign: 'center' }}>
+          ⚠️ 后端认证服务未配置，登录与找回密码功能暂不可用（访客只读模式）。
+        </div>
+      )}
+
       {/* 显示错误和消息 */}
       {!showResetForm && error && <p style={errorStyle}>{error}</p>}
       {!showResetForm && message && <p style={messageStyle}>{message}</p>}
@@ -188,7 +189,7 @@ const UserLogin = () => {
                 onChange={(e) => setResetEmail(e.target.value)}
                 required
                 style={inputStyle}
-                disabled={resetLoading}
+                disabled={resetLoading || !isSupabaseConfigured}
                 placeholder={resetEmailPlaceholder}
               />
             </div>
@@ -196,9 +197,9 @@ const UserLogin = () => {
               type="submit"
               style={{
                 ...buttonStyle,
-                backgroundColor: resetLoading ? 'var(--gray)' : 'var(--accent, #2337ff)'
+                backgroundColor: (resetLoading || !isSupabaseConfigured) ? 'var(--gray)' : 'var(--accent, #2337ff)'
               }}
-              disabled={resetLoading}
+              disabled={resetLoading || !isSupabaseConfigured}
             >
               {resetLoading ? resetLoadingText : resetButtonText}
             </button>
@@ -222,7 +223,7 @@ const UserLogin = () => {
             onChange={(e) => setEmail(e.target.value)} // 更新 email state
             required
             style={inputStyle}
-            disabled={loading}
+            disabled={loading || !isSupabaseConfigured}
             placeholder="you@example.com" // 添加邮箱占位符
           />
         </div>
@@ -236,16 +237,20 @@ const UserLogin = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             style={inputStyle}
-            disabled={loading}
+            disabled={loading || !isSupabaseConfigured}
           />
         </div>
         {/* 提交按钮 */}
-        <button 
-          type="submit" 
-          style={buttonStyle}
-          onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }} 
-          onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
-          disabled={loading}
+        <button
+          type="submit"
+          style={{
+            ...buttonStyle,
+            backgroundColor: (!isSupabaseConfigured || loading) ? 'var(--gray)' : buttonStyle.backgroundColor,
+            cursor: (!isSupabaseConfigured || loading) ? 'not-allowed' : 'pointer'
+          }}
+          onMouseOver={(e) => { if (!loading && isSupabaseConfigured) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }}
+          onMouseOut={(e) => { if (!loading && isSupabaseConfigured) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
+          disabled={loading || !isSupabaseConfigured}
         >
           {loading ? loadingButtonText : loginButtonText}
         </button>

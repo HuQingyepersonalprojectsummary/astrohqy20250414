@@ -6,22 +6,38 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "check": "astro check",
+    "audit": "npm audit",
+    "astro": "astro",
+    "test": "node --test tests/*.test.mjs",
+    "db:sync": "node scripts/sync-database.mjs --write",
+    "db:check": "node scripts/sync-database.mjs",
+    "verify": "npm run db:check && npm test && npm run check && npm run build && node scripts/check-build.mjs && npm audit"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.2.3",
-    "@astrojs/react": "^4.3.0",
-    "@astrojs/rss": "^4.0.11",
-    "@astrojs/sitemap": "^3.3.0",
+    "@astrojs/mdx": "^8.0.0",
+    "@astrojs/react": "^6.0.5",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
     "@nanostores/react": "^1.0.0",
     "@supabase/supabase-js": "^2.49.8",
-    "astro": "^5.6.1",
+    "astro": "^7.3.1",
     "nanostores": "^1.0.1",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@electric-sql/pglite": "^0.5.8",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.0.1",
     "typescript": "^5.9.3"
   }
 }

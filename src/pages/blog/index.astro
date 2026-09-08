@@ -166,7 +166,7 @@ const posts = (await getCollection('blog')).sort(
                             posts.map((post) => (
                                 <li>
                                     {/* 链接到单篇博文页面 */}
-                                    <a href={`/blog/${post.slug}/`}>
+                                    <a href={`/blog/${post.id}/`}>
                                         {/* 文章主图片，alt 文本设为文章标题以提高可访问性 */}
                                         <img width={720} height={360} src={post.data.heroImage} alt={post.data.title} />
                                         <div class="content-wrapper">

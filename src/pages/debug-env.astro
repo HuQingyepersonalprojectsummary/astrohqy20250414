@@ -4,8 +4,9 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
 
-const pageTitle = `环境变量调试 | ${SITE_TITLE}`;
-const pageDescription = '检查环境变量配置';
+const isProd = import.meta.env.PROD;
+const pageTitle = isProd ? `404 页面不可用 | ${SITE_TITLE}` : `环境变量调试 | ${SITE_TITLE}`;
+const pageDescription = isProd ? '调试页面在生产环境中已被安全禁用' : '检查环境变量配置';
 ---
 
 <!doctype html>
@@ -15,98 +16,106 @@ const pageDescription = '检查环境变量配置';
 </head>
 <body>
     <Header />
-    <main style="padding: 2rem; max-width: 800px; margin: 0 auto;">
-        <h1>环境变量调试</h1>
-        
-        <div id="env-check" style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2>环境变量状态</h2>
-            <div id="env-results">正在检查...</div>
-        </div>
+    {isProd ? (
+        <main style="padding: 4rem 2rem; max-width: 600px; margin: 0 auto; text-align: center;">
+            <h1 style="font-size: 3rem; margin-bottom: 1rem;">404</h1>
+            <p style="color: #666; margin-bottom: 2rem;">调试页面仅在本地开发环境中可用，生产环境已安全禁用。</p>
+            <a href="/" style="display: inline-block; padding: 10px 24px; background: #2337ff; color: white; border-radius: 6px; text-decoration: none;">返回首页</a>
+        </main>
+    ) : (
+        <main style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+            <h1>环境变量调试 (开发模式专属)</h1>
 
-        <div id="supabase-test" style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2>Supabase 连接测试</h2>
-            <button id="test-connection" style="padding: 10px 20px; background: #2337ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                测试 Supabase 连接
-            </button>
-            <div id="connection-results" style="margin-top: 15px;">点击按钮测试连接</div>
-        </div>
+            <div id="env-check" style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h2>环境变量状态</h2>
+                <div id="env-results">正在检查...</div>
+            </div>
 
-        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>如果环境变量缺失，请在 Vercel 中添加：</h3>
-            <pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto;">
+            <div id="supabase-test" style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h2>Supabase 连接测试</h2>
+                <button id="test-connection" style="padding: 10px 20px; background: #2337ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    测试 Supabase 连接
+                </button>
+                <div id="connection-results" style="margin-top: 15px;">点击按钮测试连接</div>
+            </div>
+
+            <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>如果环境变量缺失，请在 .env.local 中添加：</h3>
+                <pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto;">
 PUBLIC_SUPABASE_URL=your_supabase_project_url
 PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-            </pre>
-        </div>
-    </main>
-    <Footer />
+                </pre>
+            </div>
+        </main>
 
-    <script>
-        // 检查环境变量
-        function checkEnvironmentVariables() {
-            const envResults = document.getElementById('env-results');
-            if (!envResults) return;
-            
-            const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-            const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-            
-            let html = '<ul>';
-            
-            if (supabaseUrl) {
-                html += `<li style="color: green;">✅ PUBLIC_SUPABASE_URL: ${supabaseUrl}</li>`;
-            } else {
-                html += '<li style="color: red;">❌ PUBLIC_SUPABASE_URL: 未设置</li>';
-            }
-            
-            if (supabaseAnonKey) {
-                html += `<li style="color: green;">✅ PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey.substring(0, 20)}... (长度: ${supabaseAnonKey.length})</li>`;
-            } else {
-                html += '<li style="color: red;">❌ PUBLIC_SUPABASE_ANON_KEY: 未设置</li>';
-            }
-            
-            html += '</ul>';
-            
-            // 检查运行环境
-            html += `<p><strong>运行环境:</strong> ${import.meta.env.MODE}</p>`;
-            html += `<p><strong>是否为生产环境:</strong> ${import.meta.env.PROD}</p>`;
-            
-            envResults.innerHTML = html;
-        }
+        <script>
+            // 检查环境变量
+            function checkEnvironmentVariables() {
+                const envResults = document.getElementById('env-results');
+                if (!envResults) return;
 
-        // 测试 Supabase 连接
-        async function testSupabaseConnection() {
-            const resultsDiv = document.getElementById('connection-results');
-            if (!resultsDiv) return;
-            resultsDiv.innerHTML = '正在测试连接...';
-            
-            try {
-                // 动态导入 Supabase 客户端
-                const { supabase } = await import('../lib/supabaseClient');
-                
-                // 测试简单的查询
-                const { data, error } = await supabase.auth.getSession();
-                
-                if (error) {
-                    resultsDiv.innerHTML = `<p style="color: red;">❌ 连接失败: ${error.message}</p>`;
+                const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+                const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+                let html = '<ul>';
+
+                if (supabaseUrl) {
+                    html += `<li style="color: green;">✅ PUBLIC_SUPABASE_URL: ${supabaseUrl}</li>`;
                 } else {
-                    resultsDiv.innerHTML = `<p style="color: green;">✅ Supabase 连接成功！</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    html += '<li style="color: red;">❌ PUBLIC_SUPABASE_URL: 未设置</li>';
                 }
-            } catch (err) {
-                resultsDiv.innerHTML = `<p style="color: red;">❌ 连接错误: ${(err as Error).message}</p>`;
-                console.error('Supabase 连接测试失败:', err);
-            }
-        }
 
-        // 页面加载时检查环境变量
-        document.addEventListener('DOMContentLoaded', () => {
-            checkEnvironmentVariables();
-            
-            // 绑定测试按钮
-            const testBtn = document.getElementById('test-connection');
-            if (testBtn) {
-                testBtn.addEventListener('click', testSupabaseConnection);
+                if (supabaseAnonKey) {
+                    html += `<li style="color: green;">✅ PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey.substring(0, 10)}... (已脱敏)</li>`;
+                } else {
+                    html += '<li style="color: red;">❌ PUBLIC_SUPABASE_ANON_KEY: 未设置</li>';
+                }
+
+                html += '</ul>';
+                html += `<p><strong>运行环境:</strong> ${import.meta.env.MODE}</p>`;
+
+                envResults.innerHTML = html;
             }
-        });
-    </script>
+
+            // 测试 Supabase 连接
+            async function testSupabaseConnection() {
+                const resultsDiv = document.getElementById('connection-results');
+                if (!resultsDiv) return;
+                resultsDiv.innerHTML = '正在测试连接...';
+
+                try {
+                    const { supabase } = await import('../lib/supabaseClient');
+                    const { data, error } = await supabase.auth.getSession();
+
+                    if (error) {
+                        resultsDiv.innerHTML = `<p style="color: red;">❌ 连接失败: ${error.message}</p>`;
+                    } else {
+                        const hasSession = Boolean(data?.session);
+                        const safeSummary = {
+                            connected: true,
+                            sessionActive: hasSession,
+                            user: hasSession ? {
+                                id: data.session?.user?.id || 'N/A',
+                                emailMasked: data.session?.user?.email ? data.session.user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : 'N/A'
+                            } : null
+                        };
+                        resultsDiv.innerHTML = `<p style="color: green;">✅ Supabase 连接就绪！</p><pre>${JSON.stringify(safeSummary, null, 2)}</pre>`;
+                    }
+                } catch (err) {
+                    resultsDiv.innerHTML = `<p style="color: red;">❌ 连接错误: ${(err as Error).message}</p>`;
+                    console.error('Supabase 连接测试失败:', err);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                checkEnvironmentVariables();
+                const testBtn = document.getElementById('test-connection');
+                if (testBtn) {
+                    testBtn.addEventListener('click', testSupabaseConnection);
+                }
+            });
+        </script>
+    )}
+    <Footer />
 </body>
 </html>

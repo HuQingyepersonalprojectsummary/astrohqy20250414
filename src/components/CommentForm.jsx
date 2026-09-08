@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react'; // 导入 React, useState 和 useEffect hook
+import React, { useState } from 'react'; // 导入 React 和 useState hook
 import { useStore } from '@nanostores/react'; // 导入 useStore hook 用于订阅 Nano Store
 import { authStore } from '@/stores/authStore'; // 导入全局认证状态存储
-import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例与配置状态
 
 // CommentForm 组件：用于用户提交评论
 // Props:
 // - postSlug: String, 当前文章的 slug，用于将评论与文章关联
 // - onCommentSubmitted: Function, 评论成功提交后调用的回调函数 (例如，用于触发评论列表刷新)
 const CommentForm = ({ postSlug, onCommentSubmitted }) => {
-  // 新增日志: 组件加载和 props
-  console.log("CommentForm.jsx: 组件已加载，Props:", { postSlug });
-
   // 从 authStore 获取当前认证状态 (user 对象和 isLoading 标志)
   const { user, isLoading: authIsLoading } = useStore(authStore);
 
@@ -30,15 +27,18 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
   // 处理表单提交事件 (异步函数)
   const handleSubmit = async (e) => {
     e.preventDefault(); // 阻止表单默认提交行为
-    
-    // 新增日志: handleSubmit 开始，及用户和内容状态
-    console.log("CommentForm.jsx - handleSubmit: 表单提交开始。内容长度:", commentText.trim().length, "用户:", user?.email);
+
+    // 验证 Supabase 配置 (S05 修复)
+    if (!isSupabaseConfigured) {
+      setError("评论服务未配置，当前处于访客只读模式，暂无法发表评论。");
+      return;
+    }
 
     if (!commentText.trim()) {
       setError("评论内容不能为空。"); // 错误：评论内容不能为空
       return;
     }
-    if (!user) { 
+    if (!user) {
       setError("请先登录后再发表评论。"); // 错误：请先登录
       return;
     }
@@ -64,22 +64,14 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
         .insert({
           post_slug: postSlug,
           user_id: user.id,
-          content: commentText.trim(),
-          ip_address: 'Web Client' // 简化的IP地址标识
+          content: commentText.trim()
         })
-        .select()
+        .select('id, post_slug, user_id, content, likes_count, is_edited, floor_number, created_at')
         .single();
 
-      // 详细日志: 数据库插入完成情况
-      console.log("CommentForm.jsx - 数据库插入完成:", {
-        success: !insertError,
-        error: insertError,
-        data: data,
-        errorCode: insertError?.code,
-        errorMessage: insertError?.message,
-        errorDetails: insertError?.details,
-        errorHint: insertError?.hint
-      });
+      if (insertError) {
+        console.error("CommentForm.jsx - 插入评论失败:", insertError.message);
+      }
 
       // 如果数据库插入返回错误
       if (insertError) {
@@ -87,7 +79,7 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
         const errorMsg = `数据库插入失败: ${insertError.message}${insertError.code ? ` (代码: ${insertError.code})` : ''}${insertError.hint ? ` 提示: ${insertError.hint}` : ''}`;
         throw new Error(errorMsg);
       }
-      
+
       // 成功提交评论后的处理
       console.log("CommentForm.jsx - 评论提交成功，数据:", data);
 
@@ -231,6 +223,14 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
     <div style={formStyle}>
       {/* 表单标题 */}
       <h4 style={headingStyle}>{formTitleText}</h4>
+
+      {/* 访客模式提示 (S05 修复) */}
+      {!isSupabaseConfigured && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem', textAlign: 'center' }}>
+          💬 后端评论服务未配置，当前处于访客只读模式，暂无法发表评论。
+        </div>
+      )}
+
       {/* 条件渲染：如果用户已登录 (user 对象存在)，则显示评论表单 */}
       {user ? (
         <form onSubmit={handleSubmit}>
@@ -248,7 +248,7 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
               placeholder={textareaPlaceholderText}
               required // HTML5 内置校验：必填
               style={isFocused ? textareaFocusStyle : textareaStyle}
-              disabled={loading} // 评论提交过程中禁用文本域
+              disabled={loading || !isSupabaseConfigured} // 评论提交过程中或未配置时禁用文本域
               maxLength={5000}
             />
             <div style={{
@@ -276,10 +276,11 @@ const CommentForm = ({ postSlug, onCommentSubmitted }) => {
             type="submit"
             style={{
               ...buttonStyle,
-              opacity: (loading || commentText.trim().length === 0) ? 0.6 : 1,
+              opacity: (loading || !isSupabaseConfigured || commentText.trim().length === 0) ? 0.6 : 1,
+              cursor: (loading || !isSupabaseConfigured || commentText.trim().length === 0) ? 'not-allowed' : 'pointer',
               transform: loading ? 'scale(0.98)' : 'scale(1)'
             }}
-            disabled={loading || commentText.trim().length === 0} // 评论提交过程中或内容为空时禁用按钮
+            disabled={loading || !isSupabaseConfigured || commentText.trim().length === 0} // 评论提交过程中、未配置或内容为空时禁用按钮
           >
             {/* 根据加载状态显示不同的按钮文本 */}
             {loading ? (

@@ -1,0 +1,181 @@
+-- 评论系统功能升级脚本
+-- 添加点赞、编辑历史等功能
+-- 请在 Supabase SQL 编辑器中执行此脚本
+
+-- 1. 为 comments 表添加新字段
+DO $$ 
+BEGIN
+  -- 添加点赞数字段
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comments' AND column_name='likes_count') THEN
+    ALTER TABLE public.comments ADD COLUMN likes_count INTEGER DEFAULT 0 NOT NULL;
+  END IF;
+  
+  -- 添加是否已编辑标记
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comments' AND column_name='is_edited') THEN
+    ALTER TABLE public.comments ADD COLUMN is_edited BOOLEAN DEFAULT false NOT NULL;
+  END IF;
+  
+  -- 添加原始内容字段（用于编辑历史）
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comments' AND column_name='original_content') THEN
+    ALTER TABLE public.comments ADD COLUMN original_content TEXT;
+  END IF;
+  
+  -- 添加楼层号字段
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comments' AND column_name='floor_number') THEN
+    ALTER TABLE public.comments ADD COLUMN floor_number INTEGER;
+  END IF;
+END $$;
+
+-- 2. 创建评论点赞表
+CREATE TABLE IF NOT EXISTS public.comment_likes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id UUID NOT NULL REFERENCES public.comments(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  
+  -- 确保每个用户对每条评论只能点赞一次
+  UNIQUE(comment_id, user_id)
+);
+
+-- 3. 创建评论编辑历史表
+CREATE TABLE IF NOT EXISTS public.comment_edit_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id UUID NOT NULL REFERENCES public.comments(id) ON DELETE CASCADE,
+  old_content TEXT NOT NULL,
+  edited_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  edited_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- 4. 创建索引
+CREATE INDEX IF NOT EXISTS comment_likes_comment_id_idx ON public.comment_likes(comment_id);
+CREATE INDEX IF NOT EXISTS comment_likes_user_id_idx ON public.comment_likes(user_id);
+CREATE INDEX IF NOT EXISTS comment_edit_history_comment_id_idx ON public.comment_edit_history(comment_id);
+CREATE INDEX IF NOT EXISTS comments_floor_number_idx ON public.comments(post_slug, floor_number);
+
+-- 5. 启用 RLS
+ALTER TABLE public.comment_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comment_edit_history ENABLE ROW LEVEL SECURITY;
+
+-- 6. 创建 comment_likes 表的 RLS 策略
+DROP POLICY IF EXISTS "Anyone can view comment likes" ON public.comment_likes;
+CREATE POLICY "Anyone can view comment likes"
+ON public.comment_likes
+FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can like comments" ON public.comment_likes;
+CREATE POLICY "Authenticated users can like comments"
+ON public.comment_likes
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can unlike their own likes" ON public.comment_likes;
+CREATE POLICY "Users can unlike their own likes"
+ON public.comment_likes
+FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
+
+-- 7. 创建 comment_edit_history 表的 RLS 策略
+DROP POLICY IF EXISTS "Anyone can view edit history" ON public.comment_edit_history;
+CREATE POLICY "Anyone can view edit history"
+ON public.comment_edit_history
+FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Users can create edit history for their comments" ON public.comment_edit_history;
+CREATE POLICY "Users can create edit history for their comments"
+ON public.comment_edit_history
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  auth.uid() = edited_by AND
+  EXISTS (
+    SELECT 1 FROM public.comments 
+    WHERE id = comment_id AND user_id = auth.uid()
+  )
+);
+
+-- 8. 创建触发器函数：自动更新点赞数 (声明 SECURITY DEFINER 解决他人点赞更新权限受限问题)
+CREATE OR REPLACE FUNCTION update_comment_likes_count()
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.comments 
+    SET likes_count = likes_count + 1 
+    WHERE id = NEW.comment_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE public.comments 
+    SET likes_count = GREATEST(0, likes_count - 1) 
+    WHERE id = OLD.comment_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 9. 创建触发器
+DROP TRIGGER IF EXISTS comment_likes_count_trigger ON public.comment_likes;
+CREATE TRIGGER comment_likes_count_trigger
+  AFTER INSERT OR DELETE ON public.comment_likes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_comment_likes_count();
+
+-- 10. 创建函数：自动设置楼层号 (使用事务排他锁防止并发重号)
+CREATE OR REPLACE FUNCTION set_comment_floor_number()
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 按 post_slug 加排他咨询锁，保证高并发递增无冲突
+  PERFORM pg_advisory_xact_lock(hashtext(NEW.post_slug));
+
+  SELECT COALESCE(MAX(floor_number), 0) + 1
+  INTO NEW.floor_number
+  FROM public.comments
+  WHERE post_slug = NEW.post_slug;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 11. 创建楼层号触发器
+DROP TRIGGER IF EXISTS set_floor_number_trigger ON public.comments;
+CREATE TRIGGER set_floor_number_trigger
+  BEFORE INSERT ON public.comments
+  FOR EACH ROW
+  EXECUTE FUNCTION set_comment_floor_number();
+
+-- 12. 为现有评论设置楼层号
+DO $$
+DECLARE
+  post_record RECORD;
+  comment_record RECORD;
+  floor_num INTEGER;
+BEGIN
+  -- 为每个 post_slug 的现有评论设置楼层号
+  FOR post_record IN 
+    SELECT DISTINCT post_slug FROM public.comments WHERE floor_number IS NULL
+  LOOP
+    floor_num := 1;
+    FOR comment_record IN 
+      SELECT id FROM public.comments 
+      WHERE post_slug = post_record.post_slug AND floor_number IS NULL
+      ORDER BY created_at ASC
+    LOOP
+      UPDATE public.comments 
+      SET floor_number = floor_num 
+      WHERE id = comment_record.id;
+      floor_num := floor_num + 1;
+    END LOOP;
+  END LOOP;
+END $$;
+
+-- 完成提示
+SELECT '评论系统功能升级完成！新增功能：点赞、编辑历史、楼层号' as message;

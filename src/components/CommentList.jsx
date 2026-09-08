@@ -1,91 +1,120 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useStore } from '@nanostores/react';
+import { authStore } from '@/stores/authStore';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import CommentItem from './CommentItem.jsx';
 
-// CommentList 组件：用于显示特定文章的评论列表
-// Props:
-// - postSlug: String, 当前文章的 slug，用于获取对应的评论
-// - refreshKey: any (optional), 当此 prop 改变时，会触发评论的重新加载
-const CommentList = ({ postSlug, refreshKey }) => {
-  console.log("CommentList.jsx: 组件已加载，Props:", { postSlug, refreshKey });
+const PAGE_SIZE = 20;
 
-  // State: fetchedComments 用于存储从数据库获取的评论
+// 切号、换文章或刷新会创建全新的列表；旧组件的请求与写入回调不能修改它。
+const CommentList = ({ postSlug, refreshKey = 0 }) => {
+  const { user } = useStore(authStore);
+  const userId = user?.id ?? null;
+  return <CommentListPage key={JSON.stringify([postSlug, refreshKey, userId])}
+    postSlug={postSlug} userId={userId} />;
+};
+
+const CommentListPage = ({ postSlug, userId }) => {
   const [fetchedComments, setFetchedComments] = useState([]);
-  // State: loading 用于处理评论加载状态
   const [loading, setLoading] = useState(true);
-  // State: error 用于显示加载过程中的错误信息
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
-  // State: refreshing 用于显示刷新状态
   const [refreshing, setRefreshing] = useState(false);
+  const [likedCommentIds, setLikedCommentIds] = useState(new Set());
+  const request = useRef({ generation: 0, controller: null, active: false, busy: false });
+  const cursor = useRef(null);
 
-  // 定义获取评论的函数，使用 useCallback 优化
-  const fetchComments = useCallback(async () => {
-    console.log(`CommentList.jsx - fetchComments: 正在为 postSlug '${postSlug}' 获取评论 (refreshKey: ${refreshKey})`);
+  const fetchComments = useCallback(async (isLoadMore = false) => {
+    const state = request.current;
+    if (!state.active || (isLoadMore && state.busy)) return;
+    state.controller?.abort();
+    const generation = ++state.generation;
+    const controller = new AbortController();
+    state.controller = controller;
+    state.busy = true;
+    const isCurrent = () => state.active && generation === state.generation &&
+      !controller.signal.aborted && (authStore.get().user?.id ?? null) === userId;
 
-    if (!postSlug) {
-      console.log("CommentList.jsx - fetchComments: postSlug 为空，不获取评论。");
+    if (!postSlug || !isSupabaseConfigured) {
       setFetchedComments([]);
+      setLikedCommentIds(new Set());
+      setHasMore(false);
       setLoading(false);
+      state.busy = false;
       return;
     }
-
-    // 如果是刷新（refreshKey > 0），则显示刷新状态而不是加载状态
-    if (refreshKey > 0) {
-      setRefreshing(true);
-    } else {
+    if (isLoadMore) setLoadingMore(true);
+    else {
       setLoading(true);
+      setRefreshing(true);
     }
     setError('');
 
     try {
-      // 从 'comments' 表中选择所有字段，包括新增的字段，并关联查询 'profiles' 表
-      const { data, error: fetchError } = await supabase
-        .from('comments')
-        .select(`
-          *,
-          profiles (
-            username,
-            avatar_url
-          )
-        `)
-        .eq('post_slug', postSlug)
-        .order('floor_number', { ascending: true }); // 按楼层号排序
+      let query = supabase.from('comments').select(`
+        id, post_slug, user_id, content, likes_count, is_edited,
+        floor_number, created_at, updated_at, profiles (username, avatar_url)
+      `).eq('post_slug', postSlug)
+        .order('floor_number', { ascending: true }).limit(PAGE_SIZE)
+        .abortSignal(controller.signal);
+      if (isLoadMore && cursor.current !== null) query = query.gt('floor_number', cursor.current);
+      const { data, error: fetchError } = await query;
+      if (!isCurrent()) return;
+      if (fetchError) throw fetchError;
+      const newComments = data || [];
 
-      if (fetchError) {
-        console.error("CommentList.jsx - fetchComments: 获取评论数据库错误:", fetchError);
-        throw fetchError;
+      // 每次最多查询一页；点赞状态返回后再显示该页，避免按未知状态发起写入。
+      let newLikedSet = new Set();
+      if (userId && newComments.length) {
+        const { data: likesData, error: likesError } = await supabase.from('comment_likes')
+          .select('comment_id').in('comment_id', newComments.map(c => c.id))
+          .eq('user_id', userId).abortSignal(controller.signal);
+        if (!isCurrent()) return;
+        if (likesError) throw likesError;
+        newLikedSet = new Set((likesData || []).map(item => item.comment_id));
       }
-
-      console.log('CommentList.jsx - fetchComments: 评论获取成功', data);
-      setFetchedComments(data || []);
+      if (!isCurrent()) return;
+      setFetchedComments(prev => isLoadMore ? [...prev, ...newComments] : newComments);
+      setLikedCommentIds(prev => isLoadMore ? new Set([...prev, ...newLikedSet]) : newLikedSet);
+      setHasMore(newComments.length === PAGE_SIZE);
+      cursor.current = newComments.at(-1)?.floor_number ?? (isLoadMore ? cursor.current : null);
     } catch (err) {
-      console.error("CommentList.jsx - fetchComments: 处理获取评论时发生异常:", err);
-      setError(`获取评论失败: ${err.message || "未知错误。"}`);
-      setFetchedComments([]);
+      if (isCurrent()) setError(`获取评论失败: ${err.message || '未知错误'}`);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isCurrent()) {
+        state.busy = false;
+        setLoading(false);
+        setLoadingMore(false);
+        setRefreshing(false);
+      }
     }
-  }, [postSlug, refreshKey]);
+  }, [postSlug, userId]);
 
-  // 处理评论更新的回调
-  const handleCommentUpdated = useCallback(() => {
-    console.log("CommentList.jsx - handleCommentUpdated: 评论已更新，重新获取评论列表");
-    fetchComments();
-  }, [fetchComments]);
-
-  // 处理评论删除的回调
-  const handleCommentDeleted = useCallback((commentId) => {
-    console.log("CommentList.jsx - handleCommentDeleted: 评论已删除，ID:", commentId);
-    // 从本地状态中移除已删除的评论，避免重新请求
-    setFetchedComments(prev => prev.filter(comment => comment.id !== commentId));
-  }, []);
-
-  // Effect Hook: 组件挂载后以及 fetchComments 变化时，执行获取评论的逻辑
   useEffect(() => {
-    console.log("CommentList.jsx - useEffect: 即将调用 fetchComments，依赖项变化 (postSlug 或 refreshKey)。");
-    fetchComments();
+    request.current.active = true;
+    fetchComments(false);
+    return () => {
+      request.current.active = false;
+      request.current.generation++;
+      request.current.controller?.abort();
+    };
   }, [fetchComments]);
+
+  const handleCommentUpdated = useCallback(() => fetchComments(false), [fetchComments]);
+  const handleCommentDeleted = useCallback(() => fetchComments(false), [fetchComments]);
+
+  const handleLikeToggled = useCallback((commentId, isLiked, newCount, actionUserId) => {
+    if (!request.current.active || actionUserId !== userId ||
+        authStore.get().user?.id !== actionUserId) return;
+    setLikedCommentIds(prev => {
+      const next = new Set(prev);
+      if (isLiked) next.add(commentId);
+      else next.delete(commentId);
+      return next;
+    });
+    setFetchedComments(prev => prev.map(c => c.id === commentId ? { ...c, likes_count: newCount } : c));
+  }, [userId]);
 
   // 样式定义
   const listStyle = {
@@ -125,13 +154,41 @@ const CommentList = ({ postSlug, refreshKey }) => {
     border: '2px dashed rgb(var(--gray-light))'
   };
 
+  const loadMoreBtnStyle = {
+    display: 'block',
+    width: '100%',
+    padding: '12px',
+    marginTop: '20px',
+    backgroundColor: '#fff',
+    border: '1px solid var(--accent)',
+    borderRadius: '8px',
+    color: 'var(--accent)',
+    fontSize: '1rem',
+    fontWeight: '500',
+    cursor: loadingMore ? 'not-allowed' : 'pointer',
+    textAlign: 'center',
+    transition: 'all 0.2s ease'
+  };
+
   // UI 文本
   const commentsHeadingText = "💬 评论列表";
   const noCommentsYetText = "🎯 暂无评论，快来抢沙发吧！";
   const loadingCommentsText = "⏳ 正在加载评论...";
   const refreshingText = "🔄 正在刷新...";
 
-  // 如果正在加载评论，显示加载提示信息
+  // 访客模式未配置提示
+  if (!isSupabaseConfigured) {
+    return (
+      <div style={listStyle}>
+        <h4 style={headingStyle}>{commentsHeadingText}</h4>
+        <div style={{ padding: '20px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '8px', textAlign: 'center', margin: '20px 0' }}>
+          💬 后端评论服务未配置，当前处于访客只读模式（暂无评论内容展示）。
+        </div>
+      </div>
+    );
+  }
+
+  // 如果正在加载首屏评论，显示加载提示信息
   if (loading) {
     return (
       <div style={listStyle}>
@@ -142,11 +199,12 @@ const CommentList = ({ postSlug, refreshKey }) => {
   }
 
   // 如果加载过程中发生错误，显示错误信息
-  if (error) {
+  if (error && fetchedComments.length === 0) {
     return (
       <div style={listStyle}>
         <h4 style={headingStyle}>{commentsHeadingText}</h4>
         <p style={{ ...noCommentsStyle, color: 'red' }}>{error}</p>
+        <button type="button" onClick={() => fetchComments(false)}>重试加载评论</button>
       </div>
     );
   }
@@ -161,7 +219,7 @@ const CommentList = ({ postSlug, refreshKey }) => {
     );
   }
 
-  // 如果有评论，则渲染评论列表
+  // 如果有评论，则渲染评论列表及分页加载入口
   return (
     <div style={listStyle}>
       <h4 style={headingStyle}>
@@ -173,18 +231,32 @@ const CommentList = ({ postSlug, refreshKey }) => {
           </span>
         )}
       </h4>
-      
+
       {fetchedComments.map((comment) => (
         <CommentItem
           key={comment.id}
           comment={comment}
+          initialIsLiked={likedCommentIds.has(comment.id)}
           onCommentUpdated={handleCommentUpdated}
           onCommentDeleted={handleCommentDeleted}
+          onLikeToggled={handleLikeToggled}
         />
       ))}
 
+      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
+      {hasMore && (
+        <button
+          type="button"
+          style={loadMoreBtnStyle}
+          onClick={() => fetchComments(true)}
+          disabled={loadingMore}
+        >
+          {loadingMore ? '⏳ 正在加载更多评论...' : '📥 加载更多评论'}
+        </button>
+      )}
+
       {/* CSS 动画样式 */}
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }

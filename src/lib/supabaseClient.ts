@@ -1,41 +1,84 @@
 // src/lib/supabaseClient.ts
 
-// 从 @supabase/supabase-js 导入 createClient 函数，用于创建 Supabase 客户端实例
-import { createClient } from '@supabase/supabase-js';
+// 从 @supabase/supabase-js 导入 createClient 函数及 SupabaseClient 类型
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // 获取 Supabase URL 和匿名密钥 (Anon Key)
-// 这些环境变量应该在项目的 .env 文件中定义 (例如 .env.local 或 .env.development)
-// 注意：在 Astro 中，要在客户端（浏览器）代码中访问环境变量，它们必须以 `PUBLIC_` 开头。
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-// 调试信息
-console.log('Supabase 客户端初始化:', {
-  hasUrl: !!supabaseUrl,
-  hasKey: !!supabaseAnonKey,
-  url: supabaseUrl,
-  keyLength: supabaseAnonKey?.length,
-  env: import.meta.env.MODE
-});
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl &&
+  supabaseAnonKey &&
+  supabaseUrl !== 'your_supabase_project_url' &&
+  !supabaseUrl.includes('placeholder')
+);
 
-// 如果 Supabase URL 未定义，则抛出警告 (构建时可能缺少环境变量)
-if (!supabaseUrl) {
-  console.warn("警告: Supabase URL (PUBLIC_SUPABASE_URL) 未在环境变量中定义。");
-}
-// 如果 Supabase 匿名密钥未定义，则抛出警告
-if (!supabaseAnonKey) {
-  console.warn("警告: Supabase Anon Key (PUBLIC_SUPABASE_ANON_KEY) 未在环境变量中定义。");
+// 开发模式安全调试信息
+if (import.meta.env.DEV) {
+  console.log('Supabase 客户端状态:', {
+    configured: isSupabaseConfigured,
+    env: import.meta.env.MODE
+  });
 }
 
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder_key');
+// 缺失环境变量时的友好警告
+if (!isSupabaseConfigured) {
+  console.warn("提示: Supabase 环境变量 (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY) 未配置或为占位符。系统已自动进入访客只读模式，网络请求已被安全拦截。");
+}
 
-// 可选的类型增强说明：
-// 如果您的项目需要更强的类型支持（例如，针对您的数据库 schema），
-// 您可以使用 Supabase CLI 生成类型定义文件 (通常命名为 database.types.ts 或类似名称)，
-// 然后在创建客户端时指定这些类型。
-// 例如:
-// import type { Database } from './database.types'; // 假设类型文件路径
-// export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-// 这将为您的数据库表、列和函数提供类型提示和自动完成，从而提高开发效率和代码质量。
-// 要生成这些类型，通常需要在安装 Supabase CLI 后运行类似 `supabase gen types typescript --project-id <your-project-id> > src/lib/database.types.ts` 的命令。
-// 请查阅最新的 Supabase 文档以获取准确的命令和指导。
+// 访客模式下的安全 Mock Client，杜绝向占位域名发送不可用网络请求 (S05 修复)
+function createMockClient() {
+  const chainable: any = {
+    select: () => chainable,
+    insert: () => chainable,
+    update: () => chainable,
+    delete: () => chainable,
+    eq: () => chainable,
+    gt: () => chainable,
+    in: () => chainable,
+    order: () => chainable,
+    limit: () => chainable,
+    range: () => chainable,
+    single: () => Promise.resolve({ data: null, error: null }),
+    then: (resolve: any) => Promise.resolve({ data: [], error: null, count: 0 }).then(resolve)
+  };
+
+  return {
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null }),
+      getUser: async () => ({ data: { user: null }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: new Error('后端服务未配置，登录不可用（访客模式）。')
+      }),
+      signUp: async () => ({
+        data: { user: null, session: null },
+        error: new Error('后端服务未配置，注册不可用（访客模式）。')
+      }),
+      signOut: async () => ({ error: null }),
+      resetPasswordForEmail: async () => ({
+        data: null,
+        error: new Error('后端服务未配置，密码重置不可用（访客模式）。')
+      }),
+      updateUser: async () => ({
+        data: { user: null },
+        error: new Error('后端服务未配置，密码更新不可用（访客模式）。')
+      }),
+      setSession: async () => ({
+        data: { session: null, user: null },
+        error: new Error('后端服务未配置。')
+      }),
+      exchangeCodeForSession: async () => ({
+        data: { session: null, user: null },
+        error: new Error('后端服务未配置。')
+      })
+    },
+    from: (_table: string) => chainable
+  } as any;
+}
+
+export const supabase: SupabaseClient = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : (createMockClient() as unknown as SupabaseClient);

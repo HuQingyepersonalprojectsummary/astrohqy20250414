@@ -27,9 +27,7 @@ export async function GET(context) {
 			// ...post.data: 展开文章 frontmatter 中的所有数据 (例如 title, pubDate, description 等)
 			// 确保这些字段在你的博客文章 frontmatter 中存在且格式正确
 			...post.data,
-			// link: 文章的永久链接。这里假设博客文章的 URL 结构是 /blog/[post.id]/
-			// post.id 通常是基于文件名的，例如 'my-first-post.md' -> 'my-first-post'
-			// 如果你的 URL 结构不同 (例如使用 post.slug)，请相应调整此处的链接格式
+			// link: 文章的永久链接。使用 post.id 与路由 /blog/[...slug].astro 保持一致
 			link: `/blog/${post.id}/`, 
             // pubDate: 文章的发布日期，rss 包会自动从 post.data.pubDate 获取
             // 如果 pubDate 格式不正确或缺失，可能会导致 RSS feed 生成错误或验证失败

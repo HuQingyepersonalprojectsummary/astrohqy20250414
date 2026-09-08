@@ -37,18 +37,25 @@ https://astrohqy20250414.vercel.app
 **Redirect URLs** (添加以下URL):
 ```
 https://astrohqy20250414.vercel.app/auth/callback
+https://astrohqy20250414.vercel.app/auth/reset-password
 https://astrohqy20250414.vercel.app
 http://localhost:8110/auth/callback
+http://localhost:8110/auth/reset-password
 http://localhost:8110
 ```
 
 ### 3. 数据库设置
 
-如果还没有设置数据库表，请在 Supabase SQL 编辑器中执行 `supabase-setup.sql` 文件中的脚本。
+- **全新数据库（从未建表）**：请在 Supabase SQL 编辑器中执行 `supabase-setup-complete.sql` 文件中的完整初始化脚本。
+- **现有数据库（曾执行过旧版本脚本）**：请在 Supabase SQL 编辑器中执行 `supabase-migration-upgrade.sql` 升级迁移脚本（自动补列、回填楼层号、清理重叠触发器并重算点赞计数）。
+
+两个入口均由带版本号的权威 SQL 生成；旧根目录脚本已经停用。资料保留规则、事务回滚与测试项目验收见 [数据库部署说明](database/README.md)。先完成数据库升级，再部署前端。
 
 ### 4. 重新部署
 
 完成环境变量配置后，在 Vercel 中触发重新部署：
+
+本项目使用 Astro 7，Node.js 最低为 22.12.0，建议在 Vercel 设置 Node.js 24.x。部署前运行 `npm run verify`。缺少 Supabase 配置时站点进入访客模式，登录、注册和评论写入不可用。
 
 1. 在 Vercel 项目页面点击 **Deployments**
 2. 点击最新部署旁边的 **...** 菜单

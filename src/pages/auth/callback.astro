@@ -46,20 +46,17 @@ const pageDescription = '正在处理您的认证信息...';
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 const accessToken = hashParams.get('access_token');
                 const refreshToken = hashParams.get('refresh_token');
-                const tokenType = hashParams.get('token_type');
                 const type = hashParams.get('type');
-
-                console.log('Auth callback - URL参数:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
 
                 if (accessToken && refreshToken) {
                     // 设置会话
-                    const { data, error } = await supabase.auth.setSession({
+                    const { error } = await supabase.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken
                     });
 
                     if (error) {
-                        console.error('设置会话失败:', error);
+                        console.error('设置会话失败:', error.message);
                         statusDiv.innerHTML = `
                             <p style="color: red;">认证失败: ${error.message}</p>
                             <p><a href="/login">返回登录页面</a></p>
@@ -67,8 +64,6 @@ const pageDescription = '正在处理您的认证信息...';
                         loadingSpinner.style.display = 'none';
                         return;
                     }
-
-                    console.log('会话设置成功:', data);
 
                     if (type === 'signup') {
                         statusDiv.innerHTML = `

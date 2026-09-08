@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; // 导入 React 和 useState hook
-import { supabase } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'; // 导入 Supabase 客户端实例与配置状态
 
 // UserRegistration 组件：用于用户注册
 const UserRegistration = () => {
@@ -15,23 +15,16 @@ const UserRegistration = () => {
   // 处理表单提交事件 (异步函数)
   const handleSubmit = async (e) => {
     e.preventDefault(); // 阻止表单默认提交行为
+
+    // 验证 Supabase 配置 (S05 修复)
+    if (!isSupabaseConfigured) {
+      setError('后端服务未配置：当前处于访客只读模式，注册功能暂不可用。');
+      return;
+    }
+
     setLoading(true);   // 开始加载状态
     setError('');       // 清空之前的错误信息
     setMessage('');     // 清空之前的消息
-
-    // 检查环境变量
-    console.log('UserRegistration - 环境变量检查:', {
-      supabaseUrl: import.meta.env.PUBLIC_SUPABASE_URL,
-      hasAnonKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-      anonKeyLength: import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.length
-    });
-
-    // 验证 Supabase 配置
-    if (!import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_ANON_KEY) {
-      setError('Supabase 配置错误：缺少必要的环境变量');
-      setLoading(false);
-      return;
-    }
 
     // 调用 Supabase Auth 的 signUp 方法进行用户注册
     // 我们将 username 存储在 user_metadata 中。
@@ -51,15 +44,10 @@ const UserRegistration = () => {
 
     setLoading(false); // 结束加载状态
 
-    // 详细日志记录
-    console.log('UserRegistration - 注册响应详情:', {
-      data: data,
-      error: signUpError,
-      user: data?.user,
-      session: data?.session,
-      userMetadata: data?.user?.user_metadata,
-      rawUserMetadata: data?.user?.raw_user_meta_data
-    });
+    // 安全日志记录
+    if (signUpError) {
+      console.error('UserRegistration - 注册失败:', signUpError.message);
+    }
 
     if (signUpError) {
       // 如果注册过程中发生错误，则设置错误信息
@@ -115,7 +103,7 @@ const UserRegistration = () => {
   };
   const errorStyle = { color: 'red', marginBottom: '15px', textAlign: 'center' }; // 错误信息样式
   const messageStyle = { color: 'green', marginBottom: '15px', textAlign: 'center' }; // 成功/提示信息样式
-  
+
   // 定义UI文本 (中文)
   const formTitleText = "用户注册";
   const usernameLabelText = "用户名";
@@ -127,6 +115,14 @@ const UserRegistration = () => {
   return (
     <div style={formContainerStyle}>
       <h3 style={formTitleStyle}>{formTitleText}</h3>
+
+      {/* 访客模式提示 (S05 修复) */}
+      {!isSupabaseConfigured && (
+        <div style={{ padding: '10px 15px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px', marginBottom: '15px', fontSize: '0.9rem', textAlign: 'center' }}>
+          ⚠️ 后端认证服务未配置，注册功能暂不可用（访客只读模式）。
+        </div>
+      )}
+
       {/* 显示错误信息 */}
       {error && <p style={errorStyle}>{error}</p>}
       {/* 显示成功/提示信息 */}
@@ -134,22 +130,26 @@ const UserRegistration = () => {
       <form onSubmit={handleSubmit}>
         <div style={formGroupStyle}>
           <label htmlFor="reg-username" style={labelStyle}>{usernameLabelText}</label>
-          <input type="text" id="reg-username" value={username} onChange={(e) => setUsername(e.target.value)} required style={inputStyle} disabled={loading} />
+          <input type="text" id="reg-username" value={username} onChange={(e) => setUsername(e.target.value)} required style={inputStyle} disabled={loading || !isSupabaseConfigured} />
         </div>
         <div style={formGroupStyle}>
           <label htmlFor="reg-email" style={labelStyle}>{emailLabelText}</label>
-          <input type="email" id="reg-email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} disabled={loading} />
+          <input type="email" id="reg-email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} disabled={loading || !isSupabaseConfigured} />
         </div>
         <div style={formGroupStyle}>
           <label htmlFor="reg-password" style={labelStyle}>{passwordLabelText}</label>
-          <input type="password" id="reg-password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} disabled={loading} />
+          <input type="password" id="reg-password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} disabled={loading || !isSupabaseConfigured} />
         </div>
-        <button 
-          type="submit" 
-          style={buttonStyle}
-          onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }} 
-          onMouseOut={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
-          disabled={loading} // 加载时禁用按钮
+        <button
+          type="submit"
+          style={{
+            ...buttonStyle,
+            backgroundColor: (!isSupabaseConfigured || loading) ? 'var(--gray)' : buttonStyle.backgroundColor,
+            cursor: (!isSupabaseConfigured || loading) ? 'not-allowed' : 'pointer'
+          }}
+          onMouseOver={(e) => { if (!loading && isSupabaseConfigured) e.currentTarget.style.backgroundColor = 'var(--accent-dark)'; }}
+          onMouseOut={(e) => { if (!loading && isSupabaseConfigured) e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
+          disabled={loading || !isSupabaseConfigured} // 加载或未配置时禁用按钮
         >
           {loading ? loadingButtonText : registerButtonText} {/* 根据加载状态显示不同文本 */}
         </button>

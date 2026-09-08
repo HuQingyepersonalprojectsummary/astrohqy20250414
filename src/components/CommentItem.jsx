@@ -7,41 +7,38 @@ import { supabase } from '@/lib/supabaseClient';
 // Props:
 // - comment: Object, 评论数据对象
 // - onCommentUpdated: Function, 评论更新后的回调
+// - comment: Object, 评论数据对象
+// - initialIsLiked: Boolean, 当前用户是否已对该评论点赞 (来自父组件批量查询，避免 N+1)
+// - onCommentUpdated: Function, 评论更新后的回调
 // - onCommentDeleted: Function, 评论删除后的回调
-const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
+const CommentItem = ({ comment, initialIsLiked = false, onCommentUpdated, onCommentDeleted, onLikeToggled }) => {
   const { user } = useStore(authStore);
   
   // 状态管理
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(Boolean(initialIsLiked));
   const [likesCount, setLikesCount] = useState(comment.likes_count || 0);
   const [loading, setLoading] = useState(false);
-  const [showEditHistory, setShowEditHistory] = useState(false);
 
-  // 检查用户是否已点赞
+  // 同步点赞状态 (当账号切换、退出或父组件批量数据更新时同步，解决 A10)
   useEffect(() => {
-    const checkIfLiked = async () => {
-      if (!user) return;
+    if (!user) {
+      setIsLiked(false);
+    } else {
+      setIsLiked(Boolean(initialIsLiked));
+    }
+  }, [initialIsLiked, user]);
 
-      try {
-        const { data, error } = await supabase
-          .from('comment_likes')
-          .select('id')
-          .eq('comment_id', comment.id)
-          .eq('user_id', user.id)
-          .single();
+  // 同步点赞计数字段
+  useEffect(() => {
+    setLikesCount(comment.likes_count || 0);
+  }, [comment.likes_count]);
 
-        if (!error && data) {
-          setIsLiked(true);
-        }
-      } catch (error) {
-        // 用户未点赞，忽略错误
-      }
-    };
-
-    checkIfLiked();
-  }, [user, comment.id]);
+  // 同步编辑内容
+  useEffect(() => {
+    setEditContent(comment.content);
+  }, [comment.content]);
 
   // 检查当前用户是否是评论作者
   const isAuthor = user && user.id === comment.user_id;
@@ -50,13 +47,14 @@ const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
   const authorName = comment.profiles?.username || '匿名用户';
   const avatarUrl = comment.profiles?.avatar_url;
 
-  // 点赞/取消点赞
+  // 点赞/取消点赞 (S07 修复：绑定操作账号 ID，防御切号后迟到的响应污染状态)
   const handleLike = async () => {
     if (!user) {
       alert('请先登录');
       return;
     }
 
+    const actionUserId = user.id;
     setLoading(true);
     try {
       if (isLiked) {
@@ -65,11 +63,20 @@ const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
           .from('comment_likes')
           .delete()
           .eq('comment_id', comment.id)
-          .eq('user_id', user.id);
+          .eq('user_id', actionUserId);
+
+        // 异步响应返回后，必须校验当前登录账号是否仍是发起操作的账号
+        if (authStore.get().user?.id !== actionUserId) {
+          return;
+        }
 
         if (!error) {
           setIsLiked(false);
-          setLikesCount(prev => prev - 1);
+          const newCount = Math.max(0, likesCount - 1);
+          setLikesCount(newCount);
+          onLikeToggled && onLikeToggled(comment.id, false, newCount, actionUserId);
+        } else {
+          console.error('取消点赞失败:', error.message);
         }
       } else {
         // 点赞
@@ -77,12 +84,20 @@ const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
           .from('comment_likes')
           .insert({
             comment_id: comment.id,
-            user_id: user.id
+            user_id: actionUserId
           });
+
+        if (authStore.get().user?.id !== actionUserId) {
+          return;
+        }
 
         if (!error) {
           setIsLiked(true);
-          setLikesCount(prev => prev + 1);
+          const newCount = likesCount + 1;
+          setLikesCount(newCount);
+          onLikeToggled && onLikeToggled(comment.id, true, newCount, actionUserId);
+        } else {
+          console.error('点赞失败:', error.message);
         }
       }
     } catch (error) {
@@ -120,7 +135,7 @@ const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
     }
   };
 
-  // 保存编辑
+  // 保存编辑 (S08 修复：基于 updated_at 的乐观并发锁，防静默覆盖)
   const handleSaveEdit = async () => {
     if (!isAuthor || editContent.trim() === comment.content) {
       setIsEditing(false);
@@ -129,31 +144,32 @@ const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
 
     setLoading(true);
     try {
-      // 保存编辑历史
-      await supabase
-        .from('comment_edit_history')
-        .insert({
-          comment_id: comment.id,
-          old_content: comment.content,
-          edited_by: user.id
-        });
-
-      // 更新评论内容
-      const { error } = await supabase
+      // 更新评论内容并校验 updated_at 版本，防止并发编辑时相互覆盖
+      const { data, error } = await supabase
         .from('comments')
         .update({
-          content: editContent.trim(),
-          is_edited: true,
-          updated_at: new Date().toISOString()
+          content: editContent.trim()
         })
-        .eq('id', comment.id);
+        .eq('id', comment.id)
+        .eq('updated_at', comment.updated_at)
+        .select('id, content, updated_at');
 
-      if (!error) {
+      if (error) {
+        console.error('更新评论内容失败:', error.message);
+        alert('编辑失败，请稍后再试');
+        return;
+      }
+
+      // 如果返回空集合，说明该评论已在其他客户端或窗口被更新过
+      if (!data || data.length === 0) {
+        alert('该评论已被他人或在其他窗口中更新，请刷新页面查看最新内容后再尝试保存。');
         setIsEditing(false);
         onCommentUpdated && onCommentUpdated();
-      } else {
-        alert('编辑失败，请稍后再试');
+        return;
       }
+
+      setIsEditing(false);
+      onCommentUpdated && onCommentUpdated();
     } catch (error) {
       console.error('编辑评论失败:', error);
       alert('编辑失败，请稍后再试');
@@ -328,11 +344,6 @@ const CommentItem = ({ comment, onCommentUpdated, onCommentDeleted }) => {
           {/* 作者信息 */}
           <div>
             <div style={authorNameStyle}>{authorName}</div>
-            {comment.ip_address && comment.ip_address !== 'IP地址获取失败' && (
-              <div style={{ fontSize: '0.8rem', color: 'rgb(var(--gray))' }}>
-                IP: {comment.ip_address}
-              </div>
-            )}
           </div>
         </div>
 

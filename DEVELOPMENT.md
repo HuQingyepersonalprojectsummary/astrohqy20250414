@@ -17,7 +17,7 @@
 
 ### 环境要求
 
--   **Node.js**: 请确保已安装 Node.js。您可以从 [nodejs.org](https://nodejs.org/) 下载。Astro 通常在 Node.js 的 LTS (长期支持) 版本上运行效果最佳。建议版本：v18.x 或 v20.x 及以上。
+-   **Node.js**: Astro 7 要求 Node.js 22.12.0 或以上，本项目验证使用 Node.js 24。
 -   **npm**: npm (Node Package Manager) 已随 Node.js 一同安装。您也可以使用 pnpm 或 yarn。
 
 ### 安装与设置
@@ -45,7 +45,7 @@
 ```bash
 npm run dev
 ```
-通常，这会在 `http://localhost:4321` 启动服务器。控制台输出将确认访问地址。当您更改源文件时，浏览器中的页面将自动重新加载。
+默认在 `http://localhost:8110` 启动服务器，仅监听本机。控制台输出将确认访问地址。当您更改源文件时，浏览器中的页面将自动重新加载。
 
 ### 构建生产版本
 
@@ -54,6 +54,8 @@ npm run dev
 npm run build
 ```
 构建过程完成后，优化后的静态文件将默认输出到项目根目录下的 `./dist/` 文件夹中。
+
+提交/部署前运行 `npm run verify`，检查数据库入口同步、数据库与 React 回归、类型、构建产物及依赖安全。数据库升级说明见 [database/README.md](database/README.md)。内容集合采用 `glob` loader，文章路由、RSS 和评论标识统一使用 `post.id`，正文使用 `render(post)`。
 
 ### 预览生产版本
 

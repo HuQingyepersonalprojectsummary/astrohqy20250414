@@ -4,8 +4,9 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
 
-const pageTitle = `Supabase连接测试 | ${SITE_TITLE}`;
-const pageDescription = '测试Supabase连接状态';
+const isProd = import.meta.env.PROD;
+const pageTitle = isProd ? `404 页面不可用 | ${SITE_TITLE}` : `Supabase连接测试 | ${SITE_TITLE}`;
+const pageDescription = isProd ? '调试页面在生产环境中已被安全禁用' : '测试Supabase连接状态';
 ---
 
 <!doctype html>
@@ -15,183 +16,155 @@ const pageDescription = '测试Supabase连接状态';
 </head>
 <body>
     <Header />
-    <main style="padding: 2rem; max-width: 800px; margin: 0 auto;">
-        <h1>Supabase连接测试</h1>
-        <div id="test-results">
-            <p>正在测试连接...</p>
-        </div>
-        <button id="test-connection" style="padding: 10px 20px; margin: 10px 0; background: #2337ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            重新测试连接
-        </button>
-
-        <!-- 注册测试区域 -->
-        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px;">
-            <h2>注册功能测试</h2>
-            <p>测试注册API（不会实际创建用户）</p>
-            <button id="test-register" style="padding: 10px 20px; margin: 10px 0; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                测试注册API
+    {isProd ? (
+        <main style="padding: 4rem 2rem; max-width: 600px; margin: 0 auto; text-align: center;">
+            <h1 style="font-size: 3rem; margin-bottom: 1rem;">404</h1>
+            <p style="color: #666; margin-bottom: 2rem;">调试页面仅在本地开发环境中可用，生产环境已安全禁用。</p>
+            <a href="/" style="display: inline-block; padding: 10px 24px; background: #2337ff; color: white; border-radius: 6px; text-decoration: none;">返回首页</a>
+        </main>
+    ) : (
+        <main style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+            <h1>Supabase连接测试 (开发模式专属)</h1>
+            <div id="test-results">
+                <p>正在测试连接...</p>
+            </div>
+            <button id="test-connection" style="padding: 10px 20px; margin: 10px 0; background: #2337ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                重新测试连接
             </button>
-            <div id="register-results" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;"></div>
-        </div>
 
-        <div id="test-details" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px; font-family: monospace; white-space: pre-wrap;"></div>
-    </main>
+            <!-- 注册测试区域 -->
+            <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px;">
+                <h2>注册功能测试</h2>
+                <p>测试注册API（不会实际创建用户）</p>
+                <button id="test-register" style="padding: 10px 20px; margin: 10px 0; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    测试注册API
+                </button>
+                <div id="register-results" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;"></div>
+            </div>
+
+            <div id="test-details" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px; font-family: monospace; white-space: pre-wrap;"></div>
+        </main>
+
+        <script>
+            import { supabase } from '@/lib/supabaseClient';
+
+            async function testSupabaseConnection() {
+                const resultsDiv = document.getElementById('test-results');
+                const detailsDiv = document.getElementById('test-details');
+                if (!resultsDiv || !detailsDiv) return;
+
+                resultsDiv.innerHTML = '<p>正在测试连接...</p>';
+                detailsDiv.innerHTML = '';
+
+                const tests = [];
+
+                try {
+                    // 测试1: 检查环境变量
+                    const url = import.meta.env.PUBLIC_SUPABASE_URL;
+                    const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+                    tests.push(`✅ 环境变量检查:`);
+                    tests.push(`   URL: ${url ? '已设置' : '❌ 未设置'}`);
+                    tests.push(`   ANON_KEY: ${key ? '已设置' : '❌ 未设置'}`);
+                    tests.push('');
+
+                    // 测试2: 测试基本连接
+                    tests.push('🔗 测试基本连接...');
+                    const { error: healthError } = await supabase
+                        .from('comments')
+                        .select('id')
+                        .limit(1);
+
+                    if (healthError) {
+                        tests.push(`   连接测试: ⚠️ ${healthError.message}`);
+                    } else {
+                        tests.push(`   连接测试: ✅ 连接成功`);
+                    }
+                    tests.push('');
+
+                    // 测试3: 测试认证状态
+                    tests.push('🔐 测试认证状态...');
+                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+                    if (sessionError) {
+                        tests.push(`   认证测试: ❌ ${sessionError.message}`);
+                    } else {
+                        tests.push(`   认证测试: ✅ 成功`);
+                        tests.push(`   当前用户: ${session?.user?.email || '未登录'}`);
+                    }
+
+                    // 显示结果
+                    const hasErrors = tests.some(test => test.includes('❌'));
+                    const hasWarnings = tests.some(test => test.includes('⚠️'));
+
+                    if (!hasErrors && !hasWarnings) {
+                        resultsDiv.innerHTML = '<p style="color: green; font-weight: bold;">✅ 所有测试通过！Supabase配置正确。</p>';
+                    } else if (!hasErrors) {
+                        resultsDiv.innerHTML = '<p style="color: orange; font-weight: bold;">⚠️ 基本配置正确，但有一些警告需要注意。</p>';
+                    } else {
+                        resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 发现配置问题，请检查详细信息。</p>';
+                    }
+
+                } catch (error) {
+                    const err = error as Error;
+                    tests.push(`❌ 测试过程中发生错误: ${err.message}`);
+                    resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 测试失败</p>';
+                }
+
+                detailsDiv.innerHTML = tests.join('\n');
+            }
+
+            // 测试注册功能
+            async function testRegistration() {
+                const resultsDiv = document.getElementById('register-results');
+                if (!resultsDiv) return;
+                resultsDiv.innerHTML = '<p>正在测试注册API...</p>';
+
+                try {
+                    const testEmail = 'test-' + Date.now() + '@example.com';
+                    const testPassword = 'TestPassword123!';
+                    const testUsername = 'testuser' + Date.now();
+
+                    const { data, error } = await supabase.auth.signUp({
+                        email: testEmail,
+                        password: testPassword,
+                        options: {
+                            data: {
+                                username: testUsername
+                            },
+                            emailRedirectTo: `${window.location.origin}/auth/callback`
+                        }
+                    });
+
+                    if (error) {
+                        resultsDiv.innerHTML = `
+                            <p style="color: red;"><strong>❌ 注册API测试失败:</strong></p>
+                            <p>错误: ${error.message}</p>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = `
+                            <p style="color: green;"><strong>✅ 注册API测试成功!</strong></p>
+                            <p>用户ID: ${data.user?.id || 'N/A'}</p>
+                            <p>邮箱: ${data.user?.email || 'N/A'}</p>
+                        `;
+                    }
+
+                } catch (err) {
+                    const error = err as Error;
+                    resultsDiv.innerHTML = `
+                        <p style="color: red;"><strong>❌ 注册测试异常:</strong></p>
+                        <p>${error.message}</p>
+                    `;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', testSupabaseConnection);
+            const testConnBtn = document.getElementById('test-connection');
+            if (testConnBtn) testConnBtn.addEventListener('click', testSupabaseConnection);
+            const testRegBtn = document.getElementById('test-register');
+            if (testRegBtn) testRegBtn.addEventListener('click', testRegistration);
+        </script>
+    )}
     <Footer />
-
-    <script>
-        import { supabase } from '@/lib/supabaseClient';
-
-        async function testSupabaseConnection() {
-            const resultsDiv = document.getElementById('test-results');
-            const detailsDiv = document.getElementById('test-details');
-            if (!resultsDiv || !detailsDiv) return;
-            
-            resultsDiv.innerHTML = '<p>正在测试连接...</p>';
-            detailsDiv.innerHTML = '';
-
-            const tests = [];
-
-            try {
-                // 测试1: 检查环境变量
-                const url = import.meta.env.PUBLIC_SUPABASE_URL;
-                const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-                
-                tests.push(`✅ 环境变量检查:`);
-                tests.push(`   URL: ${url ? '已设置' : '❌ 未设置'}`);
-                tests.push(`   ANON_KEY: ${key ? '已设置' : '❌ 未设置'}`);
-                tests.push('');
-
-                // 测试2: 测试基本连接
-                tests.push('🔗 测试基本连接...');
-                const { data: healthData, error: healthError } = await supabase
-                    .from('_health_check')
-                    .select('*')
-                    .limit(1);
-
-                if (healthError) {
-                    tests.push(`   连接测试: ⚠️ ${healthError.message}`);
-                } else {
-                    tests.push(`   连接测试: ✅ 连接成功`);
-                }
-                tests.push('');
-
-                // 测试3: 测试认证状态
-                tests.push('🔐 测试认证状态...');
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError) {
-                    tests.push(`   认证测试: ❌ ${sessionError.message}`);
-                } else {
-                    tests.push(`   认证测试: ✅ 成功`);
-                    tests.push(`   当前用户: ${session?.user?.email || '未登录'}`);
-                }
-                tests.push('');
-
-                // 测试4: 测试数据库访问（尝试访问comments表）
-                tests.push('📊 测试数据库访问...');
-                const { data: commentsData, error: commentsError } = await supabase
-                    .from('comments')
-                    .select('count')
-                    .limit(1);
-
-                if (commentsError) {
-                    tests.push(`   Comments表: ⚠️ ${commentsError.message}`);
-                    if (commentsError.message.includes('relation "public.comments" does not exist')) {
-                        tests.push(`   建议: 需要创建comments表`);
-                    }
-                } else {
-                    tests.push(`   Comments表: ✅ 可访问`);
-                }
-
-                // 显示结果
-                const hasErrors = tests.some(test => test.includes('❌'));
-                const hasWarnings = tests.some(test => test.includes('⚠️'));
-                
-                if (!hasErrors && !hasWarnings) {
-                    resultsDiv.innerHTML = '<p style="color: green; font-weight: bold;">✅ 所有测试通过！Supabase配置正确。</p>';
-                } else if (!hasErrors) {
-                    resultsDiv.innerHTML = '<p style="color: orange; font-weight: bold;">⚠️ 基本配置正确，但有一些警告需要注意。</p>';
-                } else {
-                    resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 发现配置问题，请检查详细信息。</p>';
-                }
-
-            } catch (error) {
-                const err = error as Error;
-                tests.push(`❌ 测试过程中发生错误: ${err.message}`);
-                resultsDiv.innerHTML = '<p style="color: red; font-weight: bold;">❌ 测试失败</p>';
-            }
-
-            detailsDiv.innerHTML = tests.join('\n');
-        }
-
-        // 测试注册功能
-        async function testRegistration() {
-            const resultsDiv = document.getElementById('register-results');
-            if (!resultsDiv) return;
-            resultsDiv.innerHTML = '<p>正在测试注册API...</p>';
-
-            try {
-                // 使用一个明显的测试邮箱，不会实际注册
-                const testEmail = 'test-' + Date.now() + '@example.com';
-                const testPassword = 'TestPassword123!';
-                const testUsername = 'testuser' + Date.now();
-
-                console.log('开始测试注册API，使用测试数据:', {
-                    email: testEmail,
-                    username: testUsername
-                });
-
-                // 尝试调用注册API
-                const { data, error } = await supabase.auth.signUp({
-                    email: testEmail,
-                    password: testPassword,
-                    options: {
-                        data: {
-                            username: testUsername
-                        },
-                        emailRedirectTo: `${window.location.origin}/auth/callback`
-                    }
-                });
-
-                console.log('注册API响应:', { data, error });
-
-                if (error) {
-                    resultsDiv.innerHTML = `
-                        <p style="color: red;"><strong>❌ 注册API测试失败:</strong></p>
-                        <p>错误: ${error.message}</p>
-                        <p>代码: ${error.code || 'N/A'}</p>
-                        <p>详情: ${(error as any).details || 'N/A'}</p>
-                    `;
-                } else {
-                    resultsDiv.innerHTML = `
-                        <p style="color: green;"><strong>✅ 注册API测试成功!</strong></p>
-                        <p>用户ID: ${data.user?.id || 'N/A'}</p>
-                        <p>邮箱: ${data.user?.email || 'N/A'}</p>
-                        <p>确认状态: ${data.user?.email_confirmed_at ? '已确认' : '待确认'}</p>
-                        <p style="color: orange;">注意: 这是测试用户，请不要使用真实邮箱。</p>
-                    `;
-                }
-
-            } catch (err) {
-                const error = err as Error;
-                console.error('注册测试异常:', error);
-                resultsDiv.innerHTML = `
-                    <p style="color: red;"><strong>❌ 注册测试异常:</strong></p>
-                    <p>${error.message}</p>
-                `;
-            }
-        }
-
-        // 页面加载时自动测试
-        document.addEventListener('DOMContentLoaded', testSupabaseConnection);
-
-        // 按钮点击时重新测试
-        const testConnBtn = document.getElementById('test-connection');
-        if (testConnBtn) testConnBtn.addEventListener('click', testSupabaseConnection);
-
-        // 注册测试按钮
-        const testRegBtn = document.getElementById('test-register');
-        if (testRegBtn) testRegBtn.addEventListener('click', testRegistration);
-    </script>
 </body>
 </html>
